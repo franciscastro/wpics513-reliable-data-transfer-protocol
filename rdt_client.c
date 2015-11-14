@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 		}
 
 		// Terminate string command
-		user_command[strlen(user_input) - 1] = '\0';
+		user_command[strlen(user_command) - 1] = '\0';
 		
 		if (user_command[0] == '/') {	// 
 			printf("Valid command.\n");
