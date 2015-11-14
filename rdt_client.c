@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     	printf("Protocol: %s\n", argv[1] );
     	
     	// Initialize datalink layer
-    	datalink_init(argv[1]);
+    	//datalink_init(argv[1]);
     }
     // Unrecognized transfer protocol
     else {
