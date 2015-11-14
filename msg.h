@@ -10,11 +10,11 @@ Header file for supported commands
 #define MSG_H
 
 // Client commands
-#define CONNECT "connect"
-#define CHAT "chat"
-#define TRANSFER "transfer"
-#define HELP "help"
-#define QUIT "quit"
-#define EXIT "exit"
+#define CONNECT "-connect"
+#define CHAT "-chat"
+#define TRANSFER "-transfer"
+#define HELP "-help"
+#define QUIT "-quit"
+#define EXIT "-exit"
 
 #endif

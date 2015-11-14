@@ -30,31 +30,35 @@ int main(int argc, char *argv[]) {
     	exit(1);
     }
 
+    // For user command entries
     char user_command[USERCOMMAND];
 
     // Client command loop
     while (1) {
 
     	memset(user_command, 0, USERCOMMAND);	// always clear out user_command
-		printf("> "); 						// prompt user for command
+		printf("CLIENT> "); 					// prompt user for command
 		
 		//char* entry = fgets(user_command, USERCOMMAND, stdin);
 		if (fgets(user_command, USERCOMMAND, stdin) == NULL) {
 			continue;
 		}
 
-		/*user_input[strlen(user_input) - 1] = '\0';
-		if (user_input[0] == '/') {
-			parse_control_command(user_input);
+		// Terminate string command
+		user_command[strlen(user_input) - 1] = '\0';
+		
+		if (strcmp(user_command[0], "-")) {	// user_command[0] == '/'
+			printf("Valid command.\n");
+			//parse_control_command(user_command);
 			continue;
 		}
 		else {
 			if (strcmp(strip(user_input), "") == 0) {
 				continue;
 			}
-            printf("%s: Command not found. Type '%s' for more information.\n", user_input, HELP);
+            printf("Command: %s. Type '%s' for command list.\n", user_command, HELP);
 			continue;
-		}*/
+		}
 	}
 
 	/*
