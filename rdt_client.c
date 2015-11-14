@@ -47,13 +47,13 @@ int main(int argc, char *argv[]) {
 		// Terminate string command
 		user_command[strlen(user_input) - 1] = '\0';
 		
-		if (strcmp(user_command[0], "-")) {	// user_command[0] == '/'
+		if (user_command[0] == '/') {	// 
 			printf("Valid command.\n");
 			//parse_control_command(user_command);
 			continue;
 		}
 		else {
-			if (strcmp(strip(user_input), "") == 0) {
+			if (strcmp(strip(user_command), "") == 0) {
 				continue;
 			}
             printf("Command: %s. Type '%s' for command list.\n", user_command, HELP);
