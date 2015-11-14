@@ -9,21 +9,88 @@ Client definition file
 #include "config.h"
 #include "msg.h"
 
-// strip whitespace
-char* strip(char *s) {
-    size_t size;
-    char *end;
-    size = strlen(s);
-    if (!size) return s;
-    end = s + size - 1;
-    while (end >= s && isspace(*end)) {
-    	end--;
-    }
-    *(end + 1) = '\0';
-    while (*s && isspace(*s)) {
-    	s++;
-    }
+// Remove whitespace
+char* rmvspace(char *s) {
+
+	// Check for valid length
+    size_t size = strlen(s);    
+    if (!size) { return s; }
+
+    char *end = s + size - 1;
+    while (end >= s && isspace(*end)) { end--; }
+
+    *(end + 1) = '\0';	// Terminate this string
+
+    while (*s && isspace(*s)) { s++; }
+    
     return s;
+}
+
+// Show client commands
+void help() {
+	printf("Client commands:\n");
+	printf("%-10s - connect to the server.\n", CONNECT);
+	printf("%-10s - request for a chat partner.\n", CHAT);
+	printf("%-10s - quit the current chat channel.\n", QUIT);
+	printf("%-10s - send a file to chat partner.\n", TRANSFER);
+	printf("%-10s - print this help information.\n", HELP);
+	printf("%-10s - send a message to chat partner.\n", MESSAGE);
+	printf("%-10s - terminate and exit the program.\n", EXIT);
+	printf("%-10s - check with the server if you are in a chat queue.\n", CONFIRM);
+}
+
+
+// Parse client commands
+void parse_command(char * command) {
+
+	const char *delimiter = " ";
+
+	// Split the command and entry
+	char *token = strsep(&command, delimiter);
+	char *params[2] = {0};
+	params[0] = token;
+	params[1] = cmd;
+
+	if (strcmp(params[0], CONNECT) == 0) {
+		//if (params[1] == NULL) {
+		//	printf("Usage: %s [hostname]\n", CONNECT);
+		//	return;
+		//}
+		//g_sockfd = create_connection(params[1], PORT_2);
+		//if (g_sockfd == -1) {
+		//	return;
+		//}
+	} 
+	else if (strcmp(params[0], CHAT) == 0) {
+		//
+	} 
+	else if (strcmp(params[0], QUIT) == 0) {
+		//
+	}
+	else if (strcmp(params[0], TRANSFER) == 0) {
+		//if (params[1] == NULL) {
+		//	printf("Usage: %s [filename]\n", TRANSFER);
+		//	return;
+		//}
+		//transfer(g_sockfd, params[1]);
+	} 
+	else if (strcmp(params[0], HELP) == 0) {
+		//help();
+	}
+	else if (strcmp(params[0], MESSAGE) == 0) {
+		//if (params[1] == NULL) {
+		//	printf("Usage: %s [message]\n", MESSAGE);
+		//	return;
+		//}
+		//chat(g_sockfd, params[1]);
+	}
+	else if (strcmp(params[0], EXIT) == 0) {
+		//grace_exit(g_sockfd);
+	}
+	else {
+		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
+	}
+
 }
 
 
@@ -64,16 +131,16 @@ int main(int argc, char *argv[]) {
 		// Terminate string command
 		user_command[strlen(user_command) - 1] = '\0';
 		
-		if (user_command[0] == '/') {	// 
-			printf("Valid command.\n");
+		// Valid command format: -[command]
+		if (user_command[0] == '-') {	// 
 			//parse_control_command(user_command);
 			continue;
 		}
 		else {
-			if (strcmp(strip(user_command), "") == 0) {
+			if (strcmp(rmvspace(user_command), "") == 0) {
 				continue;
 			}
-            printf("Command: %s. Type '%s' for command list.\n", user_command, HELP);
+            printf("Invalid command: %s. \nType '%s' for command list.\n", user_command, HELP);
 			continue;
 		}
 	}
