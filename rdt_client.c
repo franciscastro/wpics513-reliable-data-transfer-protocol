@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     // Client command loop
     while (1) {
 
-    	memset(user_command, 0, BUF_MAX);	// always clear out user_command
+    	memset(user_command, 0, USERCOMMAND);	// always clear out user_command
 		printf("> "); 						// prompt user for command
 		
 		//char* entry = fgets(user_command, USERCOMMAND, stdin);
