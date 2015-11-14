@@ -49,7 +49,7 @@ void parse_command(char * command) {
 	char *token = strsep(&command, delimiter);
 	char *params[2] = {0};
 	params[0] = token;
-	params[1] = cmd;
+	params[1] = command;
 
 	if (strcmp(params[0], CONNECT) == 0) {
 		//if (params[1] == NULL) {
