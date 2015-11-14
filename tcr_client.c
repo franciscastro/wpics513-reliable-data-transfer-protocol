@@ -1,19 +1,24 @@
 /*
 Authors: Francisco Castro, Antonio Umali
-CS 513 Project 1 - Chat Roulette
-Last modified: 12 Oct 2015
+CS 513 Project 2 - Reliable Data Transfer Protocol
+Last modified: 14 Nov 2015
 
 This is the TCR client process file.
 */
 
 #include "tcr_client.h"
+#include "config.h"
+#include "msg.h"
 
-#define PORT "3490" // the port client will be connecting to
-#define MAXDATASIZE 1000 // max number of bytes we can get at once
 
+int main(int argc, char *argv[]) {
 
-int main(/*int argc, char *argv[]*/)
-{
+	// Check user arguments supplied
+	if (argc != 2) {
+		fprintf(stderr, " Usage: %s [gbn|sr] -- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+	}
+
+	/*
 	// Number of bytes received from the recv() call
 	int numbytes;
 
@@ -221,6 +226,8 @@ int main(/*int argc, char *argv[]*/)
 	// Close the connection on socket descriptor
 	close(sockfd);
 	
+	*/
+
 	return 0;
 
 }
