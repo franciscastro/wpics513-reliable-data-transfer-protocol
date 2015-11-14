@@ -132,8 +132,8 @@ int main(int argc, char *argv[]) {
 		user_command[strlen(user_command) - 1] = '\0';
 		
 		// Valid command format: -[command]
-		if (user_command[0] == '-') {	// 
-			//parse_control_command(user_command);
+		if (user_command[0] == '-') {
+			parse_command(user_command);
 			continue;
 		}
 		else {
