@@ -6,6 +6,9 @@ Last modified: 14 Nov 2015
 Header file for supported commands
 */
 
+#ifndef MSG_H
+#define MSG_H
+
 // Client commands
 #define CONNECT "connect"
 #define CHAT "chat"
@@ -13,3 +16,5 @@ Header file for supported commands
 #define HELP "help"
 #define QUIT "quit"
 #define EXIT "exit"
+
+#endif

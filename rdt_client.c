@@ -3,10 +3,9 @@ Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
 Last modified: 14 Nov 2015
 
-This is the TCR client process file.
+Client definition file
 */
 
-//#include "client.h"
 #include "config.h"
 #include "msg.h"
 
@@ -15,8 +14,19 @@ int main(int argc, char *argv[]) {
 
 	// Check user arguments supplied
 	if (argc != 2) {
-		fprintf(stderr, " Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		fprintf(stderr, "Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		exit(1);
 	}
+
+	// Check selected protocol and initialize datalink layer
+	if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
+    	printf("Protocol: %s\n", argv[1] );
+    	// Initialize datalink layer
+    } 
+    else {
+    	fprintf(stderr, "Error: Unrecognized transfer protocol. \n");
+    	exit(1);
+    }
 
 	/*
 	// Number of bytes received from the recv() call

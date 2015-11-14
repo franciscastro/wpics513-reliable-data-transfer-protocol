@@ -1,3 +1,14 @@
+/*
+Authors: Francisco Castro, Antonio Umali
+CS 513 Project 2 - Reliable Data Transfer Protocol
+Last modified: 14 Nov 2015
+
+Header file for shared definitions
+*/
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #define HOSTNAME "wind"
 #define WINDOWSIZE 5
 #define PORT "3490" // the port client will be connecting to
@@ -21,3 +32,5 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#endif
