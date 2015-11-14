@@ -6,7 +6,7 @@ Last modified: 14 Nov 2015
 This is the TCR client process file.
 */
 
-#include "tcr_client.h"
+//#include "client.h"
 #include "config.h"
 #include "msg.h"
 
@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
 
 	// Check user arguments supplied
 	if (argc != 2) {
-		fprintf(stderr, " Usage: %s [gbn|sr] -- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		fprintf(stderr, " Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
 	}
 
 	/*
