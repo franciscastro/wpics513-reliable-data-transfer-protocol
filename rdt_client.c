@@ -17,16 +17,45 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
 		exit(1);
 	}
-
 	// Check selected protocol and initialize datalink layer
-	if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
+	else if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
     	printf("Protocol: %s\n", argv[1] );
+    	
     	// Initialize datalink layer
-    } 
+    	datalink_init(argv[1]);
+    }
+    // Unrecognized transfer protocol
     else {
     	fprintf(stderr, "Error: Unrecognized transfer protocol. \n");
     	exit(1);
     }
+
+    char user_command[USERCOMMAND];
+
+    // Client command loop
+    while (1) {
+
+    	memset(user_input, 0, BUF_MAX);		// always clear out user_command
+		printf("> "); 						// prompt user for command
+		
+		//char* entry = fgets(user_command, USERCOMMAND, stdin);
+		if (fgets(user_command, USERCOMMAND, stdin) == NULL) {
+			continue;
+		}
+
+		/*user_input[strlen(user_input) - 1] = '\0';
+		if (user_input[0] == '/') {
+			parse_control_command(user_input);
+			continue;
+		}
+		else {
+			if (strcmp(strip(user_input), "") == 0) {
+				continue;
+			}
+            printf("%s: Command not found. Type '%s' for more information.\n", user_input, HELP);
+			continue;
+		}*/
+	}
 
 	/*
 	// Number of bytes received from the recv() call

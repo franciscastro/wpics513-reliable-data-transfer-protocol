@@ -9,6 +9,8 @@ Header file for shared definitions
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define USERCOMMAND 100
+
 #define HOSTNAME "wind"
 #define WINDOWSIZE 5
 #define PORT "3490" // the port client will be connecting to

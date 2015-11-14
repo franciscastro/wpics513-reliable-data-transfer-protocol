@@ -6,19 +6,24 @@ Last modified: 14 Nov 2015
 Datalink definition file
 */
 
-void datalink_init(char * protocol, int windowSize, double lossRate, double corruptionRate) {
+#include "config.h"
+
+void datalink_init(char * protocol) {
+
+    // If transfer protocol is Go-back-N
     if (strcmp(protocol, "gbn") == 0) {
-    	gbn_init(windowSize, lossRate, corruptionRate);
-    	g_datalink.send = &gbn_send;
-    	g_datalink.recv = &gbn_recv;
-    } else if (strcmp(protocol, "sr") == 0) {
-    	sr_init(windowSize, lossRate, corruptionRate);
-    	g_datalink.send = &sr_send;
-    	g_datalink.recv = &sr_recv;
-    } else {
-    	printf("Abort: Unrecognized transfer protocol. \n");
-    	exit(1);
+    	//gbn_init(windowSize, lossRate, corruptionRate);
+    	//g_datalink.send = &gbn_send;
+    	//g_datalink.recv = &gbn_recv;
+    } 
+    // If transfer protocol is Selective-repeat
+    else if (strcmp(protocol, "sr") == 0) {
+    	//sr_init(windowSize, lossRate, corruptionRate);
+    	//g_datalink.send = &sr_send;
+    	//g_datalink.recv = &sr_recv;
     }
-    printf("protocol = %s, window_size = %d, loss_rate = %lf corruption_rate = %lf\n",
-    			protocol, windowSize, lossRate, corruptionRate);
+
+    // Inform user of transfer protocol details
+    //printf("protocol = %s, window_size = %d, loss_rate = %lf corruption_rate = %lf\n",
+    //			protocol, windowSize, lossRate, corruptionRate);
 }
