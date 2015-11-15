@@ -12,7 +12,7 @@ Client definition file
 
 // Socket file descriptor for communicating to remote host
 int client_sockfd;
-int exit = 1;
+int clientRun = 1;
 
 // Parse client commands
 void parseCommand(char * command) {
@@ -60,7 +60,7 @@ void parseCommand(char * command) {
 	}
 	else if (strcmp(params[0], EXIT) == 0) {
 		//grace_exit(g_sockfd);
-		exit = 0;
+		clientRun = 0;
 	}
 	else {
 		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
@@ -73,7 +73,7 @@ void *ioHandler(void *param) {
     char user_command[USERCOMMAND];
 
     // Client command loop
-    while (exit) {
+    while (clientRun) {
 
     	memset(user_command, 0, USERCOMMAND);	// always clear out user_command
 		printf("CLIENT> "); 					// prompt user for command
@@ -124,12 +124,9 @@ int main(int argc, char *argv[]) {
 
     pthread_t ioThread;
     printf("Starting client interface...\n");
-	if(pthread_create(&ioThread, NULL, io_handler, NULL) != 0) {
-		err_ret = errno;
-		fprintf(stderr, "pthread_create() failed...\n");
-		return err_ret;
+	if(pthread_create(&ioThread, NULL, ioHandler, NULL) != 0) {
+		fprintf(stderr, "Error: pthread_create() failed... restart client.\n");
 	}
 
 	return 0;
-
 }
