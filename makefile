@@ -1,6 +1,7 @@
-# Makefile for compiling server and client code
-# Last updated: 12 October 2015
+# Makefile for compiling project
+# Last updated: 15 November 2015
 
 all:
-	gcc -o tcrserver tcr_server.c -lpthread
-	gcc -o tcrclient tcr_client.c -lpthread
+	gcc -g -Iinclude -c ./rdt_client.c -o ./client.o
+	gcc -g -Iinclude -c ./rdt_client_lib.c -o ./client_lib.o
+	gcc -g -Iinclude -o ./client ./client.o ./client_lib.o	-lpthread
