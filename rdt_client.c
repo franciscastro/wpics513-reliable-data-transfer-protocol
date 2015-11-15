@@ -128,5 +128,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "Error: pthread_create() failed... restart client.\n");
 	}
 
+	while(clientRun);
+
 	return 0;
 }
