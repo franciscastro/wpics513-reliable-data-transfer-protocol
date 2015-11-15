@@ -117,12 +117,12 @@ int connectToServer() {
 // Show client commands
 void help() {
 	printf("Client commands:\n");
-	printf("%-10s - connect to the server.\n", CONNECT);
-	printf("%-10s - request for a chat partner.\n", CHAT);
-	printf("%-10s - quit the current chat channel.\n", QUIT);
-	printf("%-10s - send a file to chat partner.\n", TRANSFER);
-	printf("%-10s - print this help information.\n", HELP);
-	printf("%-10s - send a message to chat partner.\n", MESSAGE);
-	printf("%-10s - terminate and exit the program.\n", EXIT);
-	printf("%-10s - check with the server if you are in a chat queue.\n", CONFIRM);
+	printf("\t%-10s connect to the server\n", CONNECT);
+	printf("\t%-10s request for a chat partner\n", CHAT);
+	printf("\t%-10s quit the current chat channel\n", QUIT);
+	printf("\t%-10s send a file to chat partner\n", TRANSFER);
+	printf("\t%-10s print this help information\n", HELP);
+	printf("\t%-10s send a message to chat partner\n", MESSAGE);
+	printf("\t%-10s terminate and exit the program\n", EXIT);
+	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
 }
