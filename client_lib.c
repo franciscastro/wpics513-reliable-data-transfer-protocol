@@ -1,3 +1,6 @@
+
+#include "config.h"
+#include "msg.h"
 #include "client_lib.h"
 
 // Remove whitespace
