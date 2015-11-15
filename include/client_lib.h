@@ -13,6 +13,7 @@ char* removeSpace(char *s);
 void *get_in_addr(struct sockaddr *sa);
 void allCaps(char *command);
 int connectToServer();
+void receivedDataHandler(struct packet *msgrecvd);
 void help();
 
 #endif

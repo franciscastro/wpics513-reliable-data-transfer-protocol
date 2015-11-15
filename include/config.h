@@ -17,6 +17,7 @@ Header file for shared definitions
 #define MAXDATASIZE 1000 	// max number of bytes we can get at once
 #define DROPRATE 50
 #define CORRUPTRATE 50
+#define FILENAMESIZE 30
 
 #include <stdio.h>
 #include <string.h>
@@ -34,5 +35,13 @@ Header file for shared definitions
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+struct packet {
+	char command[MAXCOMMANDSIZE];	// Command triggered
+	char message[MAXMESSAGESIZE];	// Data
+	char alias[MAXCOMMANDSIZE];		// Client alias
+	char filename[MAXCOMMANDSIZE];	// File name if needed
+	int filebytesize;				// Size in bytes of message
+};
 
 #endif

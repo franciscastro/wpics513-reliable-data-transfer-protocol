@@ -114,6 +114,37 @@ int connectToServer() {
 	return sockfd;
 }
 
+// Handling recv()ed messages from the socket
+void receivedDataHandler(struct packet *msgrecvd) {
+
+	if (strcmp((*msgrecvd).command, "ACKN") == 0) {
+		//fprintf(stdout, "You are added in the chat queue\n");
+		fprintf(stdout, "%s\n", (*msgrecvd).message);
+	}
+	else if (strcmp((*msgrecvd).command, "IN SESSION") == 0) {
+		// fprintf(stdout, "Now on a channel with: %s\n", (*msgrecvd).message);
+		fprintf(stdout, "%s\n", (*msgrecvd).message);
+	}
+	else if (strcmp((*msgrecvd).command, "QUIT") == 0) {
+		//fprintf(stdout, "You have quit the channel \n");
+		fprintf(stdout, "%s\n", (*msgrecvd).message);
+	}
+	else if (strcmp((*msgrecvd).command, "HELP") == 0) {
+		//fprintf(stdout, "Commands available:\n %s\n", (*msgrecvd).message );
+		fprintf(stdout, "%s\n", (*msgrecvd).message);
+	}
+	else if (strcmp((*msgrecvd).command, "MESSAGE") == 0) {
+		fprintf(stdout, "[ %s ]: %s\n", (*msgrecvd).alias, (*msgrecvd).message );
+	}
+	else if (strcmp((*msgrecvd).command, "CHAT_ACK") == 0) {
+		fprintf(stdout, "Now chatting with %s\n", (*msgrecvd).alias);
+	}
+	else if (strcmp((*msgrecvd).command, "NOTIF") == 0) {
+		fprintf(stdout, "%s\n", (*msgrecvd).message);
+	}
+
+}
+
 // Show client commands
 void help() {
 	printf("Client commands:\n");

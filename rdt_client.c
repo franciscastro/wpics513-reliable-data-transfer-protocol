@@ -12,7 +12,8 @@ Client definition file
 
 // Socket file descriptor for communicating to remote host
 int client_sockfd;
-int isconnected;
+int isConnected = 0;
+pthread_t waitDataThread;
 
 // Parse client commands
 void parseCommand(char * command) {
@@ -31,6 +32,7 @@ void parseCommand(char * command) {
 			return;
 		}
 		client_sockfd = connectToServer();
+		pthread_create(&waitDataThread, NULL, waitData, NULL);
 		if (client_sockfd == -1) {
 			return;
 		}
@@ -66,6 +68,90 @@ void parseCommand(char * command) {
 	}
 }
 
+// Receive data
+void *waitData(void *param) {
+
+	// [ VARIABLES FOR RECEIVING PACKETS ]
+	int recvd;					// Number of bytes read into the buffer
+	struct packet msgrecvd;		// Data packet received
+
+	// [ VARIABLES FOR RECEIVING FILES ]
+	int isReceiving = 0;				// File flag: 1=receiving files, 0 otherwise
+	char fileRecvName[FILENAMESIZE];	// Filename of file received
+	FILE *fp;							// File pointer of file received
+	int counter = 0;					// Counter to prepend if filename is a duplicate
+
+	// Set isconnected flag since client successfully connected to server
+	isConnected = 1;
+
+	// Send confirm to server
+	struct packet toSend;
+	if(createPacket("CONFIRM", &toSend) == -1) {
+		fprintf(stderr, "Can't create data to send. Try again.\n");
+	}
+	else { int sent = sendDataToServer(&toSend); }
+	memset(&toSend, 0, sizeof toSend);	// Empty the struct
+
+	// While connection with server is alive
+	while(isConnected) {
+
+		// recv() data from the socket
+		recvd = recv(sockfd, (void *)&msgrecvd, sizeof(struct packet), 0);
+		
+		// If recv() returns 0, server has closed the connection
+		if (!recvd) {
+			fprintf(stderr, "Server connection lost. \n");
+			isconnected = 0; close(sockfd); break;
+		}
+
+		if (recvd > 0) {
+
+			// Special case: when receiving files
+			if (strcmp(msgrecvd.command, "FILE_SEND") == 0) {
+
+				// First file packet received
+				if (isReceiving == 0) {
+
+					// If file already exists in current directory, prepend a number to filename
+					if (access(msgrecvd.filename, F_OK) != -1) {
+						char prepend[MAXCOMMANDSIZE];
+						sprintf(prepend, "%i", counter);
+						strncpy(fileRecvName, prepend, MAXCOMMANDSIZE);
+						strcat(fileRecvName,msgrecvd.filename);
+						counter++;
+					}
+					else {
+						strncpy(fileRecvName, msgrecvd.filename, MAXCOMMANDSIZE);
+					}					
+
+					fprintf(stdout, "Downloading %s...\n", fileRecvName);
+
+					// Open for writing
+					fp = fopen(fileRecvName, "ab");
+					if (fp == NULL) { fprintf(stdout, "File write error. Check your file name.\n"); }
+					fwrite(msgrecvd.message, 1, msgrecvd.filebytesize, fp);
+
+					// Change status to currently receiving file data
+					isReceiving = 1;
+				}
+				// Rest of the file packets
+				else { fwrite(msgrecvd.message, 1, msgrecvd.filebytesize, fp); }
+			}
+			// End of file
+			else if (strcmp(msgrecvd.command, "FILE_END") == 0) {
+				fclose(fp); isReceiving = 0;
+				fprintf(stdout, "%s saved.\n", fileRecvName);
+			}
+			// Other cases
+			else { receivedDataHandler(&msgrecvd); }
+		}
+
+		// Make sure the struct is empty
+		memset(&msgrecvd, 0, sizeof(struct packet));
+	}
+}
+
+// Main loop for the client
 int main(int argc, char *argv[]) {
 
 	// Check user arguments supplied
@@ -118,5 +204,4 @@ int main(int argc, char *argv[]) {
 	}
 
 	return 0;
-
 }
