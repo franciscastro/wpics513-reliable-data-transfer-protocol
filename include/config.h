@@ -19,7 +19,7 @@ Header file for shared definitions
 #define CORRUPTRATE 50		// % of packets corrupted
 #define FILENAMESIZE 30		// Max size of filenames
 #define MAXCOMMANDSIZE 30	// Max size of commands
-#define MAXDATASIZE 100		// Max size of data
+#define MAXDATA 100			// Max size of data
 
 #include <stdio.h>
 #include <string.h>
