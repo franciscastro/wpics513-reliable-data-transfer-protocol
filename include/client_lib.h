@@ -12,7 +12,7 @@ Header file for client definitions
 char* removeSpace(char *s);
 void *get_in_addr(struct sockaddr *sa);
 void allCaps(char *command);
-int connectToHost();
+int connectToServer();
 void help();
 
 #endif

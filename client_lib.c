@@ -40,7 +40,7 @@ void allCaps(char *command) {
 }
 
 // Connect to server: return sockfd on success, -1 on error
-int connectToHost() {
+int connectToServer() {
 
 	// Socket file descriptor for communicating to remote host
 	int sockfd;
