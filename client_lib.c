@@ -58,15 +58,15 @@ int connectToHost() {
 	//=================================================================================
 
 	// Setup values in hints
-	memset(hints, 0, sizeof *hints);	// make sure the struct is empty
-	(*hints).ai_family = AF_UNSPEC;		// don't care if IPv4 (AF_INET) or IPv6 (AF_INET6)
-	(*hints).ai_socktype = SOCK_STREAM;	// use TCP stream sockets
+	memset(&hints, 0, sizeof hints);	// make sure the struct is empty
+	hints.ai_family = AF_UNSPEC;		// don't care if IPv4 (AF_INET) or IPv6 (AF_INET6)
+	hints.ai_socktype = SOCK_STREAM;	// use TCP stream sockets
 	
 	// Call getaddrinfo() to setup the structures in hints
 	// - error: getaddrinfo() returns non-zero
 	// - success: servinfo will point to a linked list of struct addrinfo,
 	//			  each of which contains a struct sockaddr to be used later
-	if ((error_status = getaddrinfo(hostname, PORT, hints, &servinfo)) != 0) {
+	if ((error_status = getaddrinfo(HOSTNAME, PORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(error_status));
 		return -1;
 	}
