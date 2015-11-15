@@ -4,4 +4,4 @@
 all:
 	gcc -g -Iinclude -c rdt_client.c -o ./client.o
 	gcc -g -Iinclude -c rdt_client_lib.c -o ./client_lib.o
-	gcc -g -Iinclude -o client ./client.o ./client_lib.o	-lpthread
+	gcc -g -Iinclude -o client client.o client_lib.o -lpthread
