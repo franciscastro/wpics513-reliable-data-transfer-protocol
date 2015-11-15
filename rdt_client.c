@@ -12,7 +12,7 @@ Client definition file
 
 // Socket file descriptor for communicating to remote host
 int client_sockfd;
-int clientRun = 1;
+int isconnected;
 
 // Parse client commands
 void parseCommand(char * command) {
@@ -60,20 +60,38 @@ void parseCommand(char * command) {
 	}
 	else if (strcmp(params[0], EXIT) == 0) {
 		//grace_exit(g_sockfd);
-		clientRun = 0;
 	}
 	else {
 		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
 	}
 }
 
-void *ioHandler(void *param) {
+int main(int argc, char *argv[]) {
 
-	// For user command entries
+	// Check user arguments supplied
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		exit(1);
+	}
+	// Check selected protocol and initialize datalink layer
+	else if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
+
+    	printf("Protocol: %s\n", argv[1] );
+    	
+    	// Initialize datalink layer
+    	//datalink_init(argv[1]);
+    }
+    // Unrecognized transfer protocol
+    else {
+    	fprintf(stderr, "Error: Unrecognized transfer protocol. \n");
+    	exit(1);
+    }
+
+    // For user command entries
     char user_command[USERCOMMAND];
 
     // Client command loop
-    while (clientRun) {
+    while (1) {
 
     	memset(user_command, 0, USERCOMMAND);	// always clear out user_command
 		printf("CLIENT> "); 					// prompt user for command
@@ -99,36 +117,6 @@ void *ioHandler(void *param) {
 		}
 	}
 
-}
-
-int main(int argc, char *argv[]) {
-
-	// Check user arguments supplied
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
-		exit(1);
-	}
-	// Check selected protocol and initialize datalink layer
-	else if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
-
-    	printf("Protocol: %s\n", argv[1] );
-    	
-    	// Initialize datalink layer
-    	//datalink_init(argv[1]);
-    }
-    // Unrecognized transfer protocol
-    else {
-    	fprintf(stderr, "Error: Unrecognized transfer protocol. \n");
-    	exit(1);
-    }
-
-    pthread_t ioThread;
-    printf("Starting client interface...\n");
-	if(pthread_create(&ioThread, NULL, ioHandler, NULL) != 0) {
-		fprintf(stderr, "Error: pthread_create() failed... restart client.\n");
-	}
-
-	while(clientRun);
-
 	return 0;
+
 }
