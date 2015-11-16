@@ -6,8 +6,8 @@ Last modified: 15 Nov 2015
 Header file for datalink definitions
 */
 
-#ifndef RDT_DATALINK_H
-#define RDT_DATALINK_H
+#ifndef RDT_DATALINK_H_
+#define RDT_DATALINK_H_
 
 void datalinkInit(char * protocol);
 int datalinkSend(int c_sockfd, appMessage msg)

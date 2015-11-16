@@ -7,6 +7,7 @@ Datalink file
 */
 
 #include "config.h"
+#include "rdt_datalink.h"
 
 int transferProtocol;
 

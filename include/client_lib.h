@@ -6,8 +6,8 @@ Last modified: 15 Nov 2015
 Header file for client definitions
 */
 
-#ifndef CLIENT_LIB_H
-#define CLIENT_LIB_H
+#ifndef CLIENT_LIB_H_
+#define CLIENT_LIB_H_
 
 char* removeSpace(char *s);
 void *get_in_addr(struct sockaddr *sa);
