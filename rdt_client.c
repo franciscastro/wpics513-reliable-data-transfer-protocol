@@ -15,7 +15,7 @@ int isConnected = 0;		// Connected to server = 1, 0 otherwise
 pthread_t waitDataThread;	// Thread to receive data
 
 // Receive data
-void *waitData(void *param) {
+/*void *waitData(void *param) {
 
 	// [ VARIABLES FOR RECEIVING PACKETS ]
 	int recvd;					// Number of bytes read into the buffer
@@ -95,7 +95,7 @@ void *waitData(void *param) {
 		// Make sure the struct is empty
 		memset(&msgrecvd, 0, sizeof(struct packet));
 	}
-}
+}*/
 
 // Parse client commands
 void parseCommand(char * command) {
@@ -110,7 +110,7 @@ void parseCommand(char * command) {
 
 	if (strcmp(params[0], CONNECT) == 0) {
 		client_sockfd = connectToServer();
-		pthread_create(&waitDataThread, NULL, waitData, NULL);
+		//pthread_create(&waitDataThread, NULL, waitData, NULL);
 		if (client_sockfd == -1) {
 			return;
 		}
