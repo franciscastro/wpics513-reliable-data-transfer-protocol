@@ -80,21 +80,21 @@ Header file for shared definitions
 	int filebytesize;				// Size in bytes of message
 };*/
 
-struct AppMessage {
+typedef struct AppMessage {
 	int messageType;
 	char filename[FILENAMESIZE];
 	char data[];
-};
+} AppMessage;
 
-struct Packet {
+typedef struct Packet {
 	int packetType;
 	int seqNumber;
 	AppMessage appMsg;
-};
+} Packet;
 
-struct Frame {
+typedef struct Frame {
 	int checksum;
 	Packet pkt;
-};
+} Frame;
 
 #endif
