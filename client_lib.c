@@ -154,29 +154,29 @@ int connectToServer() {
 // Creates message to be sent out, returns -1 on error
 int createMessage(int c_sockfd, const char* command, const char* message) {
 
-	AppMessage * msg = malloc(sizeof(msg));
+	Packet * msg = malloc(sizeof(msg));
 
 	if (strcmp(command, CHAT) == 0) {
-		msg->messageType = CHAT_M;
+		msg->msgType = CHAT_M;
 		strncpy(msg->data, message, strlen(message));
 		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 	else if (strcmp(command, QUIT) == 0) {
-		msg->messageType = QUIT_M;
-		// Send message to datalink
+		msg->msgType = QUIT_M;
+		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 	else if (strcmp(command, TRANSFER) == 0) {
-		msg->messageType = TRANSFER_M;
+		msg->msgType = TRANSFER_M;
 		//strncpy(msg->data, message, strlen(message));
 		// Send message to datalink
 		return 1;
 	}
 	else if (strcmp(command, MESSAGE) == 0) {
-		msg->messageType = MESSAGE_M;
+		msg->msgType = MESSAGE_M;
 		strncpy(msg->data, message, strlen(message));
-		// Send message to datalink
+		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 }

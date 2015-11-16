@@ -42,7 +42,7 @@ Header file for shared definitions
 #define MAXDATASIZE 	1000 	// Max number of bytes we can get at once
 #define FILENAMESIZE	20		// Max size of filenames
 #define MAXCOMMANDSIZE	30		// Max size of commands
-#define MAXDATA			70		// Max size of data
+#define MAXDATA			100		// Max size of data
 
 // [DATALINK]
 #define GOBACKN		1	// Go-back-N transfer protocol
@@ -58,42 +58,45 @@ Header file for shared definitions
 #define EXIT		"-exit"			// Terminate and exit the program
 #define CONFIRM		"-confirm"		// Check with server if you are in chat queue
 
-// [CLIENT COMMAND TRANSLATIONS]
-#define CONNECT_M 	1	// Connect to server
-#define CHAT_M 		2	// Request for chat partner
-#define QUIT_M 		3	// Quit the chat channel
-#define TRANSFER_M 	4	// Send a file to chat partner
-#define HELP_M 		5	// Show available commands
-#define MESSAGE_M 	6	// Send a message to chat partner
-#define EXIT_M 		7	// Terminate and exit the program
-#define CONFIRM_M 	8	// Check with server if you are in chat queue
+// Message type
+typedef enum {
+	CONNECT_M
+	CHAT_M
+	QUIT_M
+	TRANSFER_M
+	HELP_M
+	MESSAGE_M
+	EXIT_M
+	CONFIRM_M
+} MessageType;
 
-// [PACKET TYPES]
-#define MSG_PKT		1	// User data packet
-#define ACK_PKT		2	// ACK data packet
+// Event type
+typedef enum {
+	FRAME_ARRIVAL, 
+	CKSUM_ERR, 
+	TIMEOUT, 
+	NETWORK_LAYER_READY
+} EventType;
 
-/*struct packet {
-	char command[MAXCOMMANDSIZE];	// Command triggered
-	char message[MAXDATA];			// Data
-	char alias[MAXCOMMANDSIZE];		// Client alias
-	char filename[MAXCOMMANDSIZE];	// File name if needed
-	int filebytesize;				// Size in bytes of message
-};*/
+// Frame type
+typedef enum {
+	DATA_F, 
+	ACK_F
+} FrameType;
 
-typedef struct AppMessage {
-	int messageType;
-	char filename[FILENAMESIZE];
-	char data[];
-} AppMessage;
-
+// Application packet
 typedef struct Packet {
-	int packetType;
-	int seqNumber;
-	AppMessage appMsg;
+	MessageType msgType;
+	char filename[FILENAMESIZE];
+	char data[MAXDATA];
 } Packet;
 
+// Datalink frame
 typedef struct Frame {
 	int checksum;
+	int seqNumber;
+	int nextAckExpected;
+	FrameType type;
 	Packet pkt;
 } Frame;
 
