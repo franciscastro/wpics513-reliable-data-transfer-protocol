@@ -1,6 +1,12 @@
+/*
+Authors: Francisco Castro, Antonio Umali
+CS 513 Project 2 - Reliable Data Transfer Protocol
+Last modified: 15 Nov 2015
+
+Client functions
+*/
 
 #include "config.h"
-#include "msg.h"
 #include "client_lib.h"
 
 // Remove whitespace
@@ -115,7 +121,7 @@ int connectToServer() {
 }
 
 // Handling recv()ed messages from the socket
-void receivedDataHandler(struct packet *msgrecvd) {
+/*void receivedDataHandler(struct packet *msgrecvd) {
 
 	if (strcmp((*msgrecvd).command, "ACKN") == 0) {
 		//fprintf(stdout, "You are added in the chat queue\n");
@@ -143,6 +149,36 @@ void receivedDataHandler(struct packet *msgrecvd) {
 		fprintf(stdout, "%s\n", (*msgrecvd).message);
 	}
 
+}*/
+
+// Creates message to be sent out, returns -1 on error
+int createMessage(int c_sockfd, const char* command, const char* message) {
+
+	AppMessage * msg = malloc(sizeof(appMessage));
+
+	if (strcmp(command, CHAT) == 0) {
+		msg->messageType = CHAT_M;
+		strncpy(msg->data, message, strlen(message));
+		datalinkSend(c_sockfd, appMessage);
+		return 1;
+	}
+	else if (strcmp(command, QUIT) == 0) {
+		msg->messageType = QUIT_M;
+		// Send message to datalink
+		return 1;
+	}
+	else if (strcmp(command, TRANSFER) == 0) {
+		msg->messageType = TRANSFER_M;
+		//strncpy(msg->data, message, strlen(message));
+		// Send message to datalink
+		return 1;
+	}
+	else if (strcmp(command, MESSAGE) == 0) {
+		msg->messageType = MESSAGE_M;
+		strncpy(msg->data, message, strlen(message));
+		// Send message to datalink
+		return 1;
+	}
 }
 
 // Show client commands

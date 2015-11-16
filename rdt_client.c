@@ -7,13 +7,12 @@ Client definition file
 */
 
 #include "config.h"
-#include "msg.h"
 #include "client_lib.h"
 
-// Socket file descriptor for communicating to remote host
-int client_sockfd;
-int isConnected = 0;
-pthread_t waitDataThread;
+// [CLIENT VARIABLES]
+int client_sockfd;			// Socket file descriptor for communicating to remote host
+int isConnected = 0;		// Connected to server = 1, 0 otherwise
+pthread_t waitDataThread;	// Thread to receive data
 
 // Receive data
 void *waitData(void *param) {
@@ -110,10 +109,6 @@ void parseCommand(char * command) {
 	params[1] = command;
 
 	if (strcmp(params[0], CONNECT) == 0) {
-		if (params[1] == NULL) {
-			printf("Usage: %s [hostname]\n", CONNECT);
-			return;
-		}
 		client_sockfd = connectToServer();
 		pthread_create(&waitDataThread, NULL, waitData, NULL);
 		if (client_sockfd == -1) {
@@ -121,30 +116,38 @@ void parseCommand(char * command) {
 		}
 	} 
 	else if (strcmp(params[0], CHAT) == 0) {
-		//
+		if (params[1] == NULL) {
+			printf("Usage: %s [alias]\n", CHAT);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
 	} 
 	else if (strcmp(params[0], QUIT) == 0) {
-		//
+		createMessage(client_sockfd, params[0], params[1]);
 	}
 	else if (strcmp(params[0], TRANSFER) == 0) {
-		//if (params[1] == NULL) {
-		//	printf("Usage: %s [filename]\n", TRANSFER);
-		//	return;
-		//}
-		//transfer(g_sockfd, params[1]);
+		if (params[1] == NULL) {
+			printf("Usage: %s [filename]\n", TRANSFER);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
 	} 
 	else if (strcmp(params[0], HELP) == 0) {
 		help();
 	}
 	else if (strcmp(params[0], MESSAGE) == 0) {
-		//if (params[1] == NULL) {
-		//	printf("Usage: %s [message]\n", MESSAGE);
-		//	return;
-		//}
-		//chat(g_sockfd, params[1]);
+		if (params[1] == NULL) {
+			printf("Usage: %s [message]\n", MESSAGE);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
 	}
 	else if (strcmp(params[0], EXIT) == 0) {
-		//grace_exit(g_sockfd);
+		printf("Closing the chat client...\n");
+		isConnected = 0;
+		close(client_sockfd);
+		printf("Any active sockets closed.\n");
+		exit(1);
 	}
 	else {
 		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
