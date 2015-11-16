@@ -159,7 +159,7 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	if (strcmp(command, CHAT) == 0) {
 		msg->messageType = CHAT_M;
 		strncpy(msg->data, message, strlen(message));
-		datalinkSend(c_sockfd, appMessage);
+		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 	else if (strcmp(command, QUIT) == 0) {
