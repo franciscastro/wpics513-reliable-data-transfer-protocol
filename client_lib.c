@@ -154,7 +154,7 @@ int connectToServer() {
 // Creates message to be sent out, returns -1 on error
 int createMessage(int c_sockfd, const char* command, const char* message) {
 
-	AppMessage * msg = malloc(sizeof(appMessage));
+	AppMessage * msg = malloc(sizeof(msg));
 
 	if (strcmp(command, CHAT) == 0) {
 		msg->messageType = CHAT_M;
