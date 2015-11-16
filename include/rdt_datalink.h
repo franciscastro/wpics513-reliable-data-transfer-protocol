@@ -10,6 +10,6 @@ Header file for datalink definitions
 #define RDT_DATALINK_H_
 
 void datalinkInit(char * protocol);
-int datalinkSend(int c_sockfd, appMessage msg)
+int datalinkSend(int c_sockfd, AppMessage msg);
 
 #endif

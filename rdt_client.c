@@ -176,6 +176,8 @@ int main(int argc, char *argv[]) {
     	exit(1);
     }
 
+    datalinkInit(argv[1]);
+
     // For user command entries
     char user_command[USERCOMMAND];
 
