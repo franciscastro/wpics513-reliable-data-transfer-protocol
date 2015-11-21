@@ -25,10 +25,10 @@ void from_physical_layer(Frame *r);
 void to_physical_layer(Frame *s);		
 
 // Start the clock running and enable the timeout event
-void start_timer(seq_nr k);				
+void start_timer(int k);				
 
 // Stop the clock and disable the timeout event
-void stop_timer(seq_nr k);				
+void stop_timer(int k);				
 
 // Start an auxiliary timer and enable the ack timeout event
 void start_ack_timer(void);				

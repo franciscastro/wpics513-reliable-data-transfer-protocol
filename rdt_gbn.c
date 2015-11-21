@@ -117,6 +117,6 @@ void gbnSend() {
         }
 
         if (nbuffered < WINDOWSIZE) { enable_upper_layer() };
-        else { disable_network_layer(); }
+        else { disable_upper_layer(); }
     }
 }

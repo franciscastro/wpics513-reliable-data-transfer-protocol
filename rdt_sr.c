@@ -25,7 +25,6 @@ static void send_frame(FrameType ft, int frame_nr, int frame_expected, Packet bu
 	
 	// Construct and send data, ACK, or NAK frame
 	Frame s;
-	
 	s.type = ft; 
 	
 	if (ft == DATA_F) {
@@ -64,14 +63,14 @@ void srSend() {
 	
 	EventType event;
 
-	enable_network_layer(); 		// initialize
+	enable_upper_layer(); 		// initialize
 
 	int i;
 	for (i = 0; i < NR BUFS; i++)  {
 		arrived[i] = false;
 	}
 
-	while (true) {
+	while (1) {
 		
 		wait_for_event(&event); /* five possibilities: see event type above */
 		
@@ -87,10 +86,10 @@ void srSend() {
 				datalinkFetch( &out_buf[next_frame_to_send % NR_BUFS] ); 
 				
 				// transmit the frame
-				send_frame(data, next frame to send, frame expected, out buf);
+				send_frame( data, next_frame_to_send, frame_expected, out_buf );
 				
 				// advance upper window edge
-				inc(next frame to send);
+				inc( next_frame_to_send );
 				
 				break;
 			
@@ -111,39 +110,42 @@ void srSend() {
 						start_ack_timer();
 					}
 					
-					if (between(frame expected,r.seq,too far) && (arrived[r.seq%NR BUFS]==false)) {
+					if ( between( frame expected, r.seqNumber, too_far ) && ( arrived[r.seqNumber % NR_BUFS] == false )) {
 					
-					/* Frames may be accepted in any order. */
-					arrived[r.seqNumber % NR_BUFS] = true; 		// Mark buffer as full
-					in_buf[r.seqNumber % NR_BUFS] = r.info; 	// insert data into buffer
-					
-					while (arrived[frame expected % NR BUFS]) {
+						// Frames may be accepted in any order
+						arrived[r.seqNumber % NR_BUFS] = true; 		// Mark buffer as full
+						in_buf[r.seqNumber % NR_BUFS] = r.info; 	// insert data into buffer
 						
-						// Pass frames and advance window
-						to_network_layer(&in_buf[frame_expected % NR_BUFS]);
-						no_nak = true;
-						arrived[frame expected % NR BUFS] = false;
-						inc(frame expected); /* advance lower edge of receiver’s window */
-						inc(too far); /* advance upper edge of receiver’s window */
-						start ack timer(); /* to see if a separate ack is needed */
-					}
+						while (arrived[frame expected % NR BUFS]) {
+							
+							// Pass frames and advance window
+							to_network_layer(&in_buf[frame_expected % NR_BUFS]);
+							
+							no_nak = true;
+							arrived[frame_expected % NR BUFS] = false;
+							
+							inc( frame_expected ); 	// Advance lower edge of receiver’s window
+							inc( too_far ); 		// Advance upper edge of receiver’s window
+							
+							start_ack_timer();	// to see if a separate ack is needed
+						}
 					}
 				}
 
 				if ( (r.type==nak) && between( ack_expected, (r.nextAckExpected + 1) % (WINDOWSIZE + 1), next_frame_to_send ) ) {
-					send_frame(data, (r.nextAckExpected + 1) % (WINDOWSIZE + 1), frame_expected, out_buf);
+					send_frame( data, (r.nextAckExpected + 1) % (WINDOWSIZE + 1), frame_expected, out_buf );
 				}
 				
-				while (between(ack expected, r.ack, next frame to send)) {
+				while ( between( ack_expected, r.nextAckExpected, next_frame_to_send ) ) {
 					
 					// Handle piggybacked ack
 					nbuffered = nbuffered − 1;
 					
 					// Frame arrived intact
-					stop_timer(ack_expected % NR_BUFS);
+					stop_timer( ack_expected % NR_BUFS );
 					
 					// Advance lower edge of sender’s window
-					inc(ack expected); 
+					inc( ack_expected ); 
 				}
 				break;
 			
@@ -158,7 +160,7 @@ void srSend() {
 			case TIMEOUT:
 				
 				// We timed out
-				send_frame( data, oldest frame, frame_expected, out_buf );
+				send_frame( data, oldest_frame, frame_expected, out_buf );
 				
 				break;
 			
@@ -166,7 +168,7 @@ void srSend() {
 				send_frame( ack, 0, frame_expected, out_buf ); /* ack timer expired; send ack */
 		}
 
-		if (nbuffered < NR BUFS) { enable_network_layer(); } 
-		else { disable_network_layer(); }
+		if (nbuffered < NR BUFS) { enable_upper_layer(); } 
+		else { disable_upper_layer(); }
 	}
 }
