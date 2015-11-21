@@ -85,8 +85,7 @@ int connectToServer() {
 	// Loop through all the results in *servinfo and bind to the first we can
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 
-		// Make a socket
-		// - assign a socket descriptor to sockfd on success, -1 on error
+		// Make a socket: assign a socket descriptor to sockfd on success, -1 on error
 		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
 			perror("Client socket");
 			continue;
@@ -159,12 +158,12 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	if (strcmp(command, CHAT) == 0) {
 		msg->msgType = CHAT_M;
 		strncpy(msg->data, message, strlen(message));
-		datalinkSend(c_sockfd, msg);
+		datalinkBuffer( c_sockfd, msg );
 		return 1;
 	}
 	else if (strcmp(command, QUIT) == 0) {
 		msg->msgType = QUIT_M;
-		datalinkSend(c_sockfd, msg);
+		datalinkBuffer(c_sockfd, msg);
 		return 1;
 	}
 	else if (strcmp(command, TRANSFER) == 0) {
@@ -176,7 +175,7 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	else if (strcmp(command, MESSAGE) == 0) {
 		msg->msgType = MESSAGE_M;
 		strncpy(msg->data, message, strlen(message));
-		datalinkSend(c_sockfd, msg);
+		datalinkBuffer(c_sockfd, msg);
 		return 1;
 	}
 }

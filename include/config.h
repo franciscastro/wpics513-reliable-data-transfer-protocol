@@ -75,7 +75,7 @@ typedef enum {
 	FRAME_ARRIVAL, 
 	CKSUM_ERR, 
 	TIMEOUT, 
-	NETWORK_LAYER_READY
+	UPPER_LAYER_READY
 } EventType;
 
 // Frame type
