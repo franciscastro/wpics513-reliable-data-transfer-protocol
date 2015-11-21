@@ -54,21 +54,21 @@ void srSend() {
 	
 	Frame r; 						// Temporary frame variable
 		
-	Packet out_buf[NR BUFS]; 		// Buffers for the outbound stream
-	Packet in_buf[NR BUFS]; 		// Buffers for the inbound stream
+	Packet out_buf[NR_BUFS]; 		// Buffers for the outbound stream
+	Packet in_buf[NR_BUFS]; 		// Buffers for the inbound stream
 	
-	boolean arrived[NR BUFS]; 		// inbound bit map
+	boolean arrived[NR_BUFS]; 		// Inbound bit map
 	
-	int nbuffered = 0; 				// how many output buffers currently used
-	
-	EventType event;
+	int nbuffered = 0; 				// How many output buffers currently used
 
 	enable_upper_layer(); 		// initialize
 
 	int i;
-	for (i = 0; i < NR BUFS; i++)  {
+	for (i = 0; i < NR_BUFS; i++)  {
 		arrived[i] = false;
 	}
+
+	EventType event;
 
 	while (1) {
 		
@@ -85,10 +85,10 @@ void srSend() {
 				// Fetch new packet
 				datalinkFetch( &out_buf[next_frame_to_send % NR_BUFS] ); 
 				
-				// transmit the frame
+				// Transmit the frame
 				send_frame( data, next_frame_to_send, frame_expected, out_buf );
 				
-				// advance upper window edge
+				// Advance upper window edge
 				inc( next_frame_to_send );
 				
 				break;
@@ -96,12 +96,12 @@ void srSend() {
 			// Data or control frame has arrived
 			case FRAME_ARRIVAL:
 
-				// fetch incoming frame from physical layer
+				// Fetch incoming frame from physical layer
 				from_physical_layer(&r);
 				
 				if (r.type == DATA_F) {
 
-					/* An undamaged frame has arrived. */
+					// Undamaged frame has arrived
 					if ((r.seqNumber != frame_expected) && no_nak) {
 						send_frame(nak, 0, frame_expected, out_buf); 
 					}
@@ -114,15 +114,15 @@ void srSend() {
 					
 						// Frames may be accepted in any order
 						arrived[r.seqNumber % NR_BUFS] = true; 		// Mark buffer as full
-						in_buf[r.seqNumber % NR_BUFS] = r.info; 	// insert data into buffer
+						in_buf[r.seqNumber % NR_BUFS] = r.info; 	// Insert data into buffer
 						
-						while (arrived[frame expected % NR BUFS]) {
+						while (arrived[frame_expected % NR_BUFS]) {
 							
 							// Pass frames and advance window
 							to_network_layer(&in_buf[frame_expected % NR_BUFS]);
 							
 							no_nak = true;
-							arrived[frame_expected % NR BUFS] = false;
+							arrived[frame_expected % NR_BUFS] = false;
 							
 							inc( frame_expected ); 	// Advance lower edge of receiver’s window
 							inc( too_far ); 		// Advance upper edge of receiver’s window
@@ -152,7 +152,7 @@ void srSend() {
 			case CKSUM_ERR:
 
 				if (no_nak) {
-					send_frame(nak, 0, frame_expected, out_buf); /* damaged frame */
+					send_frame(nak, 0, frame_expected, out_buf);	// Damaged frame
 				}
 				
 				break;
@@ -165,10 +165,12 @@ void srSend() {
 				break;
 			
 			case ACK_TIMEOUT:
-				send_frame( ack, 0, frame_expected, out_buf ); /* ack timer expired; send ack */
+
+				// ACK timer expired; send ACK
+				send_frame( ack, 0, frame_expected, out_buf );
 		}
 
-		if (nbuffered < NR BUFS) { enable_upper_layer(); } 
+		if (nbuffered < NR_BUFS) { enable_upper_layer(); } 
 		else { disable_upper_layer(); }
 	}
 }
