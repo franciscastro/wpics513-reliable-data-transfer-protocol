@@ -32,7 +32,7 @@ static void sendData(int frame_nr, int frameExpected, Packet buffer[]) {
 }
 
 // Go-back-N algorithm
-void gbnSend(int c_sockfd, Packet msg) {
+void gbnSend() {
 
     int nextFrameToSend = 0;    // WINDOWSIZE > 1; used for outbound stream; initially 0
     int ackExpected = 0;        // Oldest unACKed frame; initially 0
@@ -93,7 +93,7 @@ void gbnSend(int c_sockfd, Packet msg) {
                     stop_timer(ackExpected);   // frame arrived intact; stop timer
                     inc(ackExpected);          // contract sender’s window
                 }
-                
+
                 break;
 
             // Ignore bad frames

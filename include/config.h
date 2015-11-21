@@ -58,16 +58,22 @@ Header file for shared definitions
 #define EXIT		"-exit"			// Terminate and exit the program
 #define CONFIRM		"-confirm"		// Check with server if you are in chat queue
 
+// Boolean type
+typedef enum {
+	false, 
+	true
+} boolean;
+
 // Message type
 typedef enum {
-	CONNECT_M
-	CHAT_M
-	QUIT_M
-	TRANSFER_M
-	HELP_M
-	MESSAGE_M
-	EXIT_M
-	CONFIRM_M
+	CONNECT_M,
+	CHAT_M,
+	QUIT_M,
+	TRANSFER_M,
+	HELP_M,
+	MESSAGE_M,
+	EXIT_M,
+	CONFIRM_M,
 } MessageType;
 
 // Event type
@@ -75,7 +81,8 @@ typedef enum {
 	FRAME_ARRIVAL, 
 	CKSUM_ERR, 
 	TIMEOUT, 
-	UPPER_LAYER_READY
+	UPPER_LAYER_READY,
+	ACK_TIMEOUT
 } EventType;
 
 // Frame type

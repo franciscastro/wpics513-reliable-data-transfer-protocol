@@ -1,7 +1,7 @@
 /*
 Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
-Last modified: 15 Nov 2015
+Last modified: 21 Nov 2015
 
 Client functions
 */

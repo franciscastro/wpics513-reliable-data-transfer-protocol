@@ -43,6 +43,6 @@ void enable_upper_layer(void);
 void disable_upper_layer(void);		
 
 // Macro inc is expanded in-line: increment k circularly
-#define inc(k) if (k < MAX_SEQ) k = k + 1; else k = 0
+#define inc(k) if (k < WINDOWSIZE) k = k + 1; else k = 0
 
 #endif
