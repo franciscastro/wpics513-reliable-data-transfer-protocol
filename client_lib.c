@@ -158,12 +158,12 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	if (strcmp(command, CHAT) == 0) {
 		msg->msgType = CHAT_M;
 		strncpy(msg->data, message, strlen(message));
-		datalinkBuffer( c_sockfd, msg );
+		datalinkSend( c_sockfd, msg );
 		return 1;
 	}
 	else if (strcmp(command, QUIT) == 0) {
 		msg->msgType = QUIT_M;
-		datalinkBuffer(c_sockfd, msg);
+		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 	else if (strcmp(command, TRANSFER) == 0) {
@@ -175,7 +175,7 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	else if (strcmp(command, MESSAGE) == 0) {
 		msg->msgType = MESSAGE_M;
 		strncpy(msg->data, message, strlen(message));
-		datalinkBuffer(c_sockfd, msg);
+		datalinkSend(c_sockfd, msg);
 		return 1;
 	}
 }

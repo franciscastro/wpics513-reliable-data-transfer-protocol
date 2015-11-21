@@ -19,7 +19,7 @@ typedef struct BufferEntry {
 void datalinkInit(char * protocol);
 
 // Add client packet to datalink buffer
-void datalinkBuffer(int c_sockfd, Packet * msg);
+void datalinkSend(int c_sockfd, Packet * msg);
 
 // Fetch a packet from the datalink temporary buffer
 void datalinkFetch();

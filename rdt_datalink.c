@@ -12,8 +12,11 @@ Datalink file
 // Current transfer protocol in use
 int transferProtocol;
 
-// Pointer to buffer entries
+// Pointer to buffer entries from client
 BufferEntry * dlinkBuffer;
+
+// Pointer to packets received from physical layer
+Packet * packetReceived;
 
 // Initialize the datalink and its variables
 void datalinkInit(char * protocol) {
@@ -33,7 +36,7 @@ void datalinkInit(char * protocol) {
 }
 
 // Add client packet to datalink buffer
-void datalinkBuffer(int c_sockfd, Packet msg) {
+void datalinkSend(int c_sockfd, Packet msg) {
 
     // Create a new buffer entry
     BufferEntry * newEntry = malloc(sizeof(newEntry));
