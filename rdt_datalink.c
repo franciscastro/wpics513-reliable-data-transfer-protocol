@@ -12,11 +12,11 @@ Datalink file
 // Current transfer protocol in use
 int transferProtocol;
 
-// Pointer to buffer entries from client
-BufferEntry * dlinkBuffer;
+// Pointer to buffer for storing packets from client
+BufferEntry * fromClient;
 
-// Pointer to packets received from physical layer
-Packet * packetReceived;
+// Pointer to buffer for storing packets received from physical layer
+BufferEntry * forClient;
 
 // Initialize the datalink and its variables
 void datalinkInit(char * protocol) {
@@ -32,7 +32,7 @@ void datalinkInit(char * protocol) {
     }
 
     // Initialize the datalink temporary buffer
-    dlinkBuffer = NULL;
+    fromClient = NULL;
 }
 
 // Add client packet to datalink buffer
@@ -44,14 +44,14 @@ void datalinkSend(int c_sockfd, Packet msg) {
     newEntry->pkt = msg;
     
     // If the datalink buffer is empty
-    if (dlinkBuffer == NULL) {
-        dlinkBuffer = newEntry;
+    if (fromClient == NULL) {
+        fromClient = newEntry;
     }
     // If the datalink buffer is not empty
     else {
 
         // Temporary BufferEntry pointer to traverse the buffer
-        BufferEntry * temp = dlinkBuffer;
+        BufferEntry * temp = fromClient;
 
         // Look for the end of the buffer linked list
         while(temp != NULL) {
@@ -69,13 +69,13 @@ void datalinkSend(int c_sockfd, Packet msg) {
 void datalinkFetch(Packet * buffer) {
     
     // Copy packet from temporary datalink buffer to actual buffer
-    buffer = dlinkBuffer->pkt;
+    buffer = fromClient->pkt;
 
     // Point temporary pointer to current packet
-    BufferEntry * temp = dlinkBuffer;
+    BufferEntry * temp = fromClient;
 
     // Move the datalink buffer pointer forward
-    dlinkBuffer = dlinkBuffer->next;
+    fromClient = fromClient->next;
 
     // Deallocate memory
     free(temp);
@@ -87,14 +87,14 @@ void datalinkSend() {
     if (transferProtocol == GOBACKN) {
 
         // Call Go-back-N, passing the CURRENT packet in the buffer
-        gbnSend(c_sockfd, dlinkBuffer->pkt);
+        gbnSend(c_sockfd, fromClient->pkt);
 
     }
     // If transfer protocol is Selective Repeat
     else if (transferProtocol == SELREPEAT) {
 
         // Call Selective repeat, passing the CURRENT packet in the buffer
-        srSend(c_sockfd, dlinkBuffer->pkt);
+        srSend(c_sockfd, fromClient->pkt);
 
     }
 }
