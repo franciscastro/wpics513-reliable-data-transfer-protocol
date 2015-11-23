@@ -44,6 +44,9 @@ void enable_upper_layer();
 // Forbid GBN from getting packets from outgoing datalink buffer
 void disable_upper_layer();
 
+// Go-back-N algorithm
+void *gbn(void *param);
+
 // Macro inc is expanded in-line: increment k circularly
 #define inc(k) if (k < WINDOWSIZE) k = k + 1; else k = 0
 
