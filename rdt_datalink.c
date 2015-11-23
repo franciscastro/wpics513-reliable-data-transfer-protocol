@@ -91,7 +91,7 @@ void datalinkTake(Packet * pktReceived) {
     // Create new buffer entry
     BufferEntry * newEntry = malloc(sizeof(newEntry));
     newEntry->next = NULL;
-    newEntry->pkt = pktReceived;
+    newEntry->pkt = (*pktReceived);
 
     // If the incoming datalink buffer is empty
     if ( forClient == NULL ) {
@@ -120,7 +120,7 @@ void datalinkTake(Packet * pktReceived) {
 void datalinkReceive(Packet * clientReceiver) {
 
     // Copy packet from datalink incoming buffer
-    clientReceiver = forClient->pkt;
+    (*clientReceiver) = forClient->pkt;
 
     // Point temporary pointer to current packet
     BufferEntry * temp = forClient;
@@ -137,7 +137,7 @@ void datalinkReceive(Packet * clientReceiver) {
 void datalinkFetch(Packet * buffer) {
     
     // Copy packet from datalink outgoing buffer to GBN buffer
-    buffer = fromClient->pkt;
+    (*buffer) = fromClient->pkt;
 
     // Point temporary pointer to current packet
     BufferEntry * temp = fromClient;
