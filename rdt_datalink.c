@@ -58,7 +58,7 @@ void datalinkSend(int c_sockfd, Packet * msg) {
     // Create a new buffer entry
     BufferEntry * newEntry = malloc(sizeof(newEntry));
     newEntry->next = NULL;
-    newEntry->pkt = msg;
+    newEntry->pkt = (*msg);
     
     // If the outgoing datalink buffer is empty
     if ( fromClient == NULL ) {
