@@ -12,10 +12,10 @@ Datalink file
 // Current transfer protocol in use
 int transferProtocol;
 
-// Pointer to buffer for storing packets from client
+// Pointer to outgoing buffer for storing packets from client
 BufferEntry * fromClient;
 
-// Pointer to buffer for storing packets received from physical layer
+// Pointer to incoming buffer for storing packets received from physical layer
 BufferEntry * forClient;
 
 // Initialize the datalink and its variables
@@ -31,11 +31,14 @@ void datalinkInit(char * protocol) {
         transferProtocol = SELREPEAT;
     }
 
-    // Initialize the datalink temporary buffer
+    // Initialize the datalink buffers
     fromClient = NULL;
+    forClient = NULL;
+
+    // Start processes for GBN and SELREPEAT here
 }
 
-// Add client packet to datalink buffer
+// Add client packet to datalink outgoing buffer
 void datalinkSend(int c_sockfd, Packet msg) {
 
     // Create a new buffer entry
@@ -43,21 +46,21 @@ void datalinkSend(int c_sockfd, Packet msg) {
     newEntry->next = NULL;
     newEntry->pkt = msg;
     
-    // If the datalink buffer is empty
-    if (fromClient == NULL) {
+    // If the outgoing datalink buffer is empty
+    if ( fromClient == NULL ) {
         fromClient = newEntry;
     }
-    // If the datalink buffer is not empty
+    // If the outgoing datalink buffer is not empty
     else {
 
         // Temporary BufferEntry pointer to traverse the buffer
         BufferEntry * temp = fromClient;
 
         // Look for the end of the buffer linked list
-        while(temp != NULL) {
+        while ( temp != NULL ) {
 
             // Attach the client packet to the end of the buffer
-            if (temp->next == NULL) {
+            if ( temp->next == NULL ) {
                 temp->next = newEntry;
             }
             temp = temp->next;
@@ -65,10 +68,56 @@ void datalinkSend(int c_sockfd, Packet msg) {
     }
 }
 
-// Return 1 on success, 0 on fail
+// Pass packet up to client
+void datalinkReceive(Packet * clientReceiver) {
+
+    // Copy packet from datalink incoming buffer
+    clientReceiver = forClient->pkt;
+
+    // Point temporary pointer to current packet
+    BufferEntry * temp = forClient;
+
+    // Move datalink buffer pointer forward
+    forClient = forClient->next;
+
+    // Deallocate memory
+    free temp;
+}
+
+// Take packet from GBN/SELREPEAT
+void datalinkTake(Packet * pktReceived) {
+
+    // Create new buffer entry
+    BufferEntry * newEntry = malloc(sizeof(newEntry));
+    newEntry->next = NULL;
+    newEntry->pkt = pktReceived;
+
+    // If the incoming datalink buffer is empty
+    if ( forClient == NULL ) {
+        forClient = newEntry;
+    }
+    // If the incoming datalink buffer is not empty
+    else {
+
+        // Temporary BufferEntry pointer to traverse the buffer
+        BufferEntry * temp = forClient;
+
+        // Look for the end of the buffer linked list
+        while ( temp != NULL ) {
+
+            // Attach the incoming packet to the end of the buffer
+            if ( temp->next == NULL ) {
+                temp->next = newEntry;
+            }
+            temp = temp->next;
+        }
+    }
+}
+
+// Pass packet to GBN/SELREPEAT buffer
 void datalinkFetch(Packet * buffer) {
     
-    // Copy packet from temporary datalink buffer to actual buffer
+    // Copy packet from datalink outgoing buffer to GBN buffer
     buffer = fromClient->pkt;
 
     // Point temporary pointer to current packet
@@ -82,7 +131,7 @@ void datalinkFetch(Packet * buffer) {
 }
 
 /*
-void datalinkSend() {
+void datalinkTransport() {
     // If transfer protocol is Go-back-N
     if (transferProtocol == GOBACKN) {
 

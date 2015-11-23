@@ -21,7 +21,13 @@ void datalinkInit(char * protocol);
 // Add client packet to datalink buffer
 void datalinkSend(int c_sockfd, Packet * msg);
 
-// Fetch a packet from the datalink temporary buffer
+// Pass packet up to client
+void datalinkReceive(Packet * clientReceiver);
+
+// Take packet from GBN/SELREPEAT
+void datalinkTake(Packet * pktReceived);
+
+// Pass packet to GBN buffer
 void datalinkFetch();
 
 #endif

@@ -78,20 +78,20 @@ void gbnSend() {
                 from_physical_layer( &r ); 
                 
                 // Frames are accepted only in order
-                if (r.seq == frameExpected) {
+                if ( r.seqNumber == frameExpected ) {
 
-                    to_network_layer(&r.info);  // Pass packet to network layer
-                    inc(frameExpected);        // Advance lower edge of receiver’s window
+                    datalinkTake( &r.pkt );     // Pass packet to datalink buffer
+                    inc( frameExpected );         // Advance lower edge of receiver’s window
 
                 }
 
                 // Ack n implies n − 1, n − 2, etc. Check for this.
-                while ( between( ackExpected, r.ack, nextFrameToSend ) ) {
+                while ( between( ackExpected, r.nextAckExpected, nextFrameToSend ) ) {
                     
                     // Handle piggybacked ack
                     nbuffered = nbuffered − 1;  // one frame fewer buffered
-                    stop_timer(ackExpected);   // frame arrived intact; stop timer
-                    inc(ackExpected);          // contract sender’s window
+                    stop_timer( ackExpected );   // frame arrived intact; stop timer
+                    inc( ackExpected );          // contract sender’s window
                 }
 
                 break;
