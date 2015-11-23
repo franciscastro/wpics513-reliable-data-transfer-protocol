@@ -9,8 +9,6 @@ Header file for Go-back-N definitions
 #ifndef RDT_GBN_H_
 #define RDT_GBN_H_
 
-void gbnInit();
-
 // Wait for an event to happen; return its type in event
 void wait_for_event( EventType *event );	
 

@@ -7,20 +7,13 @@ Go-back-N file
 */
 
 #include "config.h"
-#include "rdt_datalink.h"
+#include "rdt_gbn.h"
 
 boolean upperLayerEnabled = false;      // Flag to determine if datalink can pass down a packet
 boolean frameArrived = false;           // Flag to determine if frame from physical layer has arrived
 
 pthread_t gbnThread;            // Thread for Go-Back-N passer to physical layer
 pthread_t gbnThreadReceiver;    // Thread for Go-Back-N receiver from physical layer
-
-void gbnInit() {
-    if (pthread_create(&gbnThread, NULL, gbn, NULL)) {
-        fprintf(stderr, "Error creating GBN thread.");
-        exit(1);
-    }
-}
 
 // Return true if a <= b < c circularly; false otherwise.
 static boolean between(int a, int b, int c) {
@@ -49,7 +42,7 @@ void wait_for_event(EventType * event) {
 
     // CASE 1: There's data in outgoing datalink buffer AND datalink is allowed to pass down packets to protocol
     if ( upperLayerEnabled == true ) {
-        event = UPPER_LAYER_READY;
+        (*event) = UPPER_LAYER_READY;
         return;
     }
     // CASE 2: There's data incoming from physical layer
@@ -57,16 +50,16 @@ void wait_for_event(EventType * event) {
     else if ( frameArrived == true ) {
         // Check if frame is corrupt
         if ( checkCorrupt() == 1 ) {
-            event = CKSUM_ERR;
+            (*event) = CKSUM_ERR;
         }
         // Frame is not corrupt
         else {
-            event = FRAME_ARRIVAL;
+            (*event) = FRAME_ARRIVAL;
         }
     }
     // CASE 4: There's a timeout
     else if ( 1 ) {
-        event = TIMEOUT;
+        (*event) = TIMEOUT;
     }
 }
 
@@ -177,7 +170,7 @@ void *gbn(void *param) {
         }
 
         // If the number of currently buffered packets is less than WINDOWSIZE, enable receiving packets from datalink
-        if ( nbuffered < WINDOWSIZE ) { enable_upper_layer() };
+        if ( nbuffered < WINDOWSIZE ) { enable_upper_layer(); }
         // If the number of currently buffered packets is WINDOWSIZE, can't receive packets from datalink
         else { disable_upper_layer(); }
     }
