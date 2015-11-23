@@ -9,6 +9,9 @@ Go-back-N file
 #include "config.h"
 #include "rdt_datalink.h"
 
+// Flag to determine if datalink can pass down a packet
+boolean upperLayerEnabled = false;
+
 // Return true if a <= b < c circularly; false otherwise.
 static boolean between(int a, int b, int c) {
     if (((a <= b) && (b < c)) || ((c < a) && (a <= b)) || ((b < c) && (c < a)))
@@ -29,6 +32,41 @@ static void sendData(int frame_nr, int frameExpected, Packet buffer[]) {
     
     to_physical_layer(&s);      // Transmit the frame
     start_timer(frame_nr);      // Start the timer
+}
+
+// Wait for an event to happen; return its type in event
+void wait_for_event(EventType * event) {
+
+    // CASE 1: There's data in outgoing datalink buffer AND datalink is allowed to pass down packets to protocol
+    if ( upperLayerEnabled == true ) {
+        event = UPPER_LAYER_READY;
+    }
+    // CASE 2: There's data incoming from physical layer
+    else if ( 1 ) {
+        event = FRAME_ARRIVAL;
+    }
+    // CASE 3: There's a checksum error
+    else if ( 1 ) {
+        event = CKSUM_ERR;
+    }
+    // CASE 4: There's a timeout
+    else if ( 1 ) {
+        event = TIMEOUT;
+    }
+}
+
+// Allow GBN to get packets from outgoing datalink buffer
+void enable_upper_layer() {
+
+    if ( fromClient != NULL ) {
+        upperLayerEnabled = true;
+    }
+
+}
+
+// Forbid GBN from getting packets from outgoing datalink buffer
+void disable_upper_layer() {
+    upperLayerEnabled = false;
 }
 
 // Go-back-N algorithm
@@ -67,7 +105,7 @@ void gbnSend() {
                 sendData( nextFrameToSend, frameExpected, buffer );
                 
                 // Advance sender's upper window edge
-                inc(nextFrameToSend); 
+                inc( nextFrameToSend ); 
                 
                 break;
 
@@ -81,7 +119,7 @@ void gbnSend() {
                 if ( r.seqNumber == frameExpected ) {
 
                     datalinkTake( &r.pkt );     // Pass packet to datalink buffer
-                    inc( frameExpected );         // Advance lower edge of receiver’s window
+                    inc( frameExpected );       // Advance lower edge of receiver’s window
 
                 }
 
@@ -116,7 +154,9 @@ void gbnSend() {
                 }
         }
 
-        if (nbuffered < WINDOWSIZE) { enable_upper_layer() };
+        // If the number of currently buffered packets is less than WINDOWSIZE, enable receiving packets from datalink
+        if ( nbuffered < WINDOWSIZE ) { enable_upper_layer() };
+        // If the number of currently buffered packets is WINDOWSIZE, can't receive packets from datalink
         else { disable_upper_layer(); }
     }
 }

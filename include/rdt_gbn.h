@@ -10,13 +10,13 @@ Header file for Go-back-N definitions
 #define RDT_GBN_H_
 
 // Wait for an event to happen; return its type in event
-void wait_for_event(event_type *event);	
+void wait_for_event( EventType *event );	
 
 // Fetch a packet from the network layer for transmission on the channel
 // void from_upper_layer(Packet *p);		
 
 // Deliver information from an inbound frame to the network layer
-void to_network_layer(packet *p);		
+// void to_network_layer(Packet *p);		
 
 // Go get an inbound frame from the physical layer and copy it to r
 void from_physical_layer(Frame *r);		
@@ -31,16 +31,18 @@ void start_timer(int k);
 void stop_timer(int k);				
 
 // Start an auxiliary timer and enable the ack timeout event
-void start_ack_timer(void);				
+void start_ack_timer();				
 
 // Stop the auxiliary timer and disable the ack timeout event
-void stop_ack_timer(void);				
+void stop_ack_timer();				
 
-// Allow the upper layer to cause an upper layer ready event
-void enable_upper_layer(void);		
+// Allow the upper layer to cause an upper layer ready event;
+// Allow GBN to get packets from outgoing datalink buffer
+void enable_upper_layer();
 
-// Forbid the upper layer from causing an upper layer ready event
-void disable_upper_layer(void);		
+// Forbid the upper layer from causing an upper layer ready event;
+// Forbid GBN from getting packets from outgoing datalink buffer
+void disable_upper_layer();
 
 // Macro inc is expanded in-line: increment k circularly
 #define inc(k) if (k < WINDOWSIZE) k = k + 1; else k = 0
