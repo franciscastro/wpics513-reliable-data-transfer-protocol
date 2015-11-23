@@ -9,14 +9,9 @@ Datalink file
 #include "config.h"
 #include "rdt_datalink.h"
 
-// Current transfer protocol in use
-int transferProtocol;
-
-// Pointer to outgoing buffer for storing packets from client
-BufferEntry * fromClient;
-
-// Pointer to incoming buffer for storing packets received from physical layer
-BufferEntry * forClient;
+int transferProtocol;       // Current transfer protocol in use
+BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
+BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
 
 // Initialize the datalink and its variables
 void datalinkInit(char * protocol) {

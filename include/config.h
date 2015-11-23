@@ -35,8 +35,6 @@ Header file for shared definitions
 
 // [TRANSFER PROTOCOL]
 #define WINDOWSIZE 	5		// Window size for transfer protocol
-#define DROPRATE 	50		// % of packets to be dropped
-#define CORRUPTRATE 50		// % of packets corrupted
 
 // [APPLICATION DATA]
 #define MAXDATASIZE 	1000 	// Max number of bytes we can get at once

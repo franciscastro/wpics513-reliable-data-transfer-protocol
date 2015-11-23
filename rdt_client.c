@@ -158,8 +158,8 @@ void parseCommand(char * command) {
 int main(int argc, char *argv[]) {
 
 	// Check user arguments supplied
-	if (argc != 2) {
-		fprintf(stderr, "Usage: %s [gbn|sr] \n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+	if (argc != 4) {
+		fprintf(stderr, "Usage: %s [gbn|sr] [corrupt rate] [drop rate]\n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
 		exit(1);
 	}
 	// Check selected protocol and initialize datalink layer
@@ -177,6 +177,7 @@ int main(int argc, char *argv[]) {
     }
 
     datalinkInit(argv[1]);
+    physicalInit(argv[1], argv[2], argv[3]);
 
     // For user command entries
     char user_command[USERCOMMAND];
