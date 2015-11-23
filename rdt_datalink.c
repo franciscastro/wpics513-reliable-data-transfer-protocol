@@ -35,7 +35,7 @@ void datalinkInit(char * protocol) {
         printf("\nGBN thread created.");
     } 
     // Transfer protocol is Selective-repeat
-    else if (strcmp(protocol, "sr") == 0) {
+    /*else if (strcmp(protocol, "sr") == 0) {
         transferProtocol = SELREPEAT;
 
         // Start thread for SELREPEAT
@@ -44,7 +44,7 @@ void datalinkInit(char * protocol) {
             exit(1);
         }
         printf("\nSELREPEAT thread created.");
-    }
+    }*/
 
     // Initialize the datalink buffers
     fromClient = NULL;
@@ -53,7 +53,7 @@ void datalinkInit(char * protocol) {
 
 // Receive packet from client:
 // Add client packet to datalink outgoing buffer
-void datalinkSend(int c_sockfd, Packet msg) {
+void datalinkSend(int c_sockfd, Packet * msg) {
 
     // Create a new buffer entry
     BufferEntry * newEntry = malloc(sizeof(newEntry));

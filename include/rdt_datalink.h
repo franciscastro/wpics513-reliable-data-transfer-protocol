@@ -11,7 +11,7 @@ Header file for datalink definitions
 
 // Structure definition for a temporary buffer space to store Packets received from the client application
 typedef struct BufferEntry {
-    BufferEntry * next;
+    struct BufferEntry * next;
     Packet pkt;
 } BufferEntry;
 
