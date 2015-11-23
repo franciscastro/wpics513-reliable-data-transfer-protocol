@@ -12,6 +12,16 @@ Go-back-N file
 boolean upperLayerEnabled = false;      // Flag to determine if datalink can pass down a packet
 boolean frameArrived = false;           // Flag to determine if frame from physical layer has arrived
 
+pthread_t gbnThread;            // Thread for Go-Back-N passer to physical layer
+pthread_t gbnThreadReceiver;    // Thread for Go-Back-N receiver from physical layer
+
+void gbnInit() {
+    if (pthread_create(&gbnThread, NULL, gbn, NULL)) {
+        fprintf(stderr, "Error creating GBN thread.");
+        exit(1);
+    }
+}
+
 // Return true if a <= b < c circularly; false otherwise.
 static boolean between(int a, int b, int c) {
     if (((a <= b) && (b < c)) || ((c < a) && (a <= b)) || ((b < c) && (c < a)))

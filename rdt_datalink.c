@@ -14,9 +14,6 @@ int transferProtocol;       // Current transfer protocol in use
 BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
 BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
 
-pthread_t gbnThread;            // Thread for Go-Back-N passer to physical layer
-pthread_t gbnThreadReceiver;    // Thread for Go-Back-N receiver from physical layer
-
 pthread_t srThread;             // Thread for Selective-repeat passer to physical layer
 pthread_t srThreadReceiver;     // Thread for Selective-repeat receiver from physical layer
 
@@ -28,10 +25,8 @@ void datalinkInit(char * protocol) {
         transferProtocol = GOBACKN;
 
         // Start thread for GBN
-        if (pthread_create(&gbnThread, NULL, gbn, NULL)) {
-            fprintf(stderr, "Error creating GBN thread.");
-            exit(1);
-        }
+        gbnInit();
+        
         printf("\nGBN thread created.");
     } 
     // Transfer protocol is Selective-repeat
