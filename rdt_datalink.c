@@ -28,7 +28,7 @@ void datalinkInit(char * protocol) {
         transferProtocol = GOBACKN;
 
         // Start thread for GBN
-        if (pthread_create(&gbnThread, NULL, &gbn, NULL)) {
+        if (pthread_create(&gbnThread, NULL, gbn, NULL)) {
             fprintf(stderr, "Error creating GBN thread.");
             exit(1);
         }
