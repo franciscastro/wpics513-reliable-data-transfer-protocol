@@ -6,4 +6,5 @@ all:
 	gcc -g -Iinclude -c client_lib.c -o ./client_lib.o
 	gcc -g -Iinclude -c rdt_datalink.c -o ./datalink.o
 	gcc -g -Iinclude -c rdt_gbn.c -o ./gbn.o
-	gcc -g -Iinclude -o client client.o client_lib.o datalink.o gbn.o -lpthread
+	gcc -g -Iinclude -c rdt_physical.c -o ./physical.o
+	gcc -g -Iinclude -o client client.o client_lib.o datalink.o gbn.o physical.o -lpthread

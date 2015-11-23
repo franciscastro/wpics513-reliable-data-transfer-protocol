@@ -18,8 +18,8 @@ pthread_t waitDataThread;	// Thread to receive data
 /*void *waitData(void *param) {
 
 	// [ VARIABLES FOR RECEIVING PACKETS ]
-	int recvd;					// Number of bytes read into the buffer
-	struct packet msgrecvd;		// Data packet received
+	int recvd;				// Number of bytes read into the buffer
+	Packet msgrecvd;		// Data packet received
 
 	// [ VARIABLES FOR RECEIVING FILES ]
 	int isReceiving = 0;				// File flag: 1=receiving files, 0 otherwise
@@ -176,6 +176,7 @@ int main(int argc, char *argv[]) {
     	exit(1);
     }
 
+    // Initialize other layers
     datalinkInit(argv[1]);
     physicalInit(argv[1], argv[2], argv[3]);
 

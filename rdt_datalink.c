@@ -10,8 +10,15 @@ Datalink file
 #include "rdt_datalink.h"
 
 int transferProtocol;       // Current transfer protocol in use
+
 BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
 BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
+
+pthread_t gbnThread;            // Thread for Go-Back-N passer to physical layer
+pthread_t gbnThreadReceiver;    // Thread for Go-Back-N receiver from physical layer
+
+pthread_t srThread;             // Thread for Selective-repeat passer to physical layer
+pthread_t srThreadReceiver;     // Thread for Selective-repeat receiver from physical layer
 
 // Initialize the datalink and its variables
 void datalinkInit(char * protocol) {
@@ -20,19 +27,31 @@ void datalinkInit(char * protocol) {
     if (strcmp(protocol, "gbn") == 0) {
         transferProtocol = GOBACKN;
 
+        // Start thread for GBN
+        if (pthread_create(&gbnThread, NULL, &gbn, NULL)) {
+            fprintf(stderr, "Error creating GBN thread.");
+            exit(1);
+        }
+        printf("\nGBN thread created.");
     } 
     // Transfer protocol is Selective-repeat
     else if (strcmp(protocol, "sr") == 0) {
         transferProtocol = SELREPEAT;
+
+        // Start thread for SELREPEAT
+        if (pthread_create(&srThread, NULL, &sr, NULL)) {
+            fprintf(stderr, "Error creating SELREPEAT thread.");
+            exit(1);
+        }
+        printf("\nSELREPEAT thread created.");
     }
 
     // Initialize the datalink buffers
     fromClient = NULL;
     forClient = NULL;
-
-    // Start processes for GBN and SELREPEAT here
 }
 
+// Receive packet from client:
 // Add client packet to datalink outgoing buffer
 void datalinkSend(int c_sockfd, Packet msg) {
 
@@ -58,28 +77,15 @@ void datalinkSend(int c_sockfd, Packet msg) {
             if ( temp->next == NULL ) {
                 temp->next = newEntry;
             }
+
+            // Move to next BufferEntry
             temp = temp->next;
         }
     }
 }
 
-// Pass packet up to client
-void datalinkReceive(Packet * clientReceiver) {
-
-    // Copy packet from datalink incoming buffer
-    clientReceiver = forClient->pkt;
-
-    // Point temporary pointer to current packet
-    BufferEntry * temp = forClient;
-
-    // Move datalink buffer pointer forward
-    forClient = forClient->next;
-
-    // Deallocate memory
-    free temp;
-}
-
-// Take packet from GBN/SELREPEAT
+// Receive packet from GBN/SELREPEAT:
+// Add GBN/SELREPEAT packet to datalink incoming buffer
 void datalinkTake(Packet * pktReceived) {
 
     // Create new buffer entry
@@ -109,7 +115,25 @@ void datalinkTake(Packet * pktReceived) {
     }
 }
 
-// Pass packet to GBN/SELREPEAT buffer
+// Pass packet up to client: 
+// Triggered by client
+void datalinkReceive(Packet * clientReceiver) {
+
+    // Copy packet from datalink incoming buffer
+    clientReceiver = forClient->pkt;
+
+    // Point temporary pointer to current packet
+    BufferEntry * temp = forClient;
+
+    // Move datalink buffer pointer forward
+    forClient = forClient->next;
+
+    // Deallocate memory
+    free(temp);
+}
+
+// Pass packet to GBN/SELREPEAT buffer:
+// Triggered by GBN/SELREPEAT
 void datalinkFetch(Packet * buffer) {
     
     // Copy packet from datalink outgoing buffer to GBN buffer

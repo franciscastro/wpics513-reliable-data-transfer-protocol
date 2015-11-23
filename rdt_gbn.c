@@ -9,11 +9,8 @@ Go-back-N file
 #include "config.h"
 #include "rdt_datalink.h"
 
-// Flag to determine if datalink can pass down a packet
-boolean upperLayerEnabled = false;
-
-// Flag to determine if frame from physical layer has arrived
-boolean frameArrived = false;
+boolean upperLayerEnabled = false;      // Flag to determine if datalink can pass down a packet
+boolean frameArrived = false;           // Flag to determine if frame from physical layer has arrived
 
 // Return true if a <= b < c circularly; false otherwise.
 static boolean between(int a, int b, int c) {
@@ -43,14 +40,19 @@ void wait_for_event(EventType * event) {
     // CASE 1: There's data in outgoing datalink buffer AND datalink is allowed to pass down packets to protocol
     if ( upperLayerEnabled == true ) {
         event = UPPER_LAYER_READY;
+        return;
     }
     // CASE 2: There's data incoming from physical layer
-    else if ( 1 ) {
-        event = FRAME_ARRIVAL;
-    }
     // CASE 3: There's a checksum error
-    else if ( 1 ) {
-        event = CKSUM_ERR;
+    else if ( frameArrived == true ) {
+        // Check if frame is corrupt
+        if ( checkCorrupt() == 1 ) {
+            event = CKSUM_ERR;
+        }
+        // Frame is not corrupt
+        else {
+            event = FRAME_ARRIVAL;
+        }
     }
     // CASE 4: There's a timeout
     else if ( 1 ) {
@@ -64,25 +66,23 @@ void enable_upper_layer() {
     if ( fromClient != NULL ) {
         upperLayerEnabled = true;
     }
-
 }
 
 // Forbid GBN from getting packets from outgoing datalink buffer
 void disable_upper_layer() {
+
     upperLayerEnabled = false;
 }
 
-// Thread to wait for packets to arrive from the physical layer
-void gbnWait() {
+// Change frameArrived to true:
+// Triggered by physical layer
+void frameArrivedSignal(boolean val) {
 
-    while (1) {
-        
-    }
-
+    frameArrived = val;
 }
 
 // Go-back-N algorithm
-void gbnSend() {
+void *gbn(void *param) {
 
     int nextFrameToSend = 0;    // WINDOWSIZE > 1; used for outbound stream; initially 0
     int ackExpected = 0;        // Oldest unACKed frame; initially 0
