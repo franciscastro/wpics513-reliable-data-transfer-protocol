@@ -181,7 +181,7 @@ int main(int argc, char *argv[]) {
     // For user command entries
     char user_command[USERCOMMAND];
 
-    // Client command loop
+    // Client main loop waits for input from user
     while (1) {
 
     	memset(user_command, 0, USERCOMMAND);	// always clear out user_command

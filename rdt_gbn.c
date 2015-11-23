@@ -12,6 +12,9 @@ Go-back-N file
 // Flag to determine if datalink can pass down a packet
 boolean upperLayerEnabled = false;
 
+// Flag to determine if frame from physical layer has arrived
+boolean frameArrived = false;
+
 // Return true if a <= b < c circularly; false otherwise.
 static boolean between(int a, int b, int c) {
     if (((a <= b) && (b < c)) || ((c < a) && (a <= b)) || ((b < c) && (c < a)))
@@ -25,13 +28,13 @@ static void sendData(int frame_nr, int frameExpected, Packet buffer[]) {
     
     Frame s;    // Temporary Frame
     
-    s.info = buffer[frame_nr];      // Insert packet into frame
+    s.pkt = buffer[frame_nr];      // Insert packet into frame
     s.seqNumber = frame_nr;         // Insert sequence number into frame
 
     s.nextAckExpected = (frameExpected + WINDOWSIZE) % (WINDOWSIZE + 1);     // Piggyback ack
     
-    to_physical_layer(&s);      // Transmit the frame
-    start_timer(frame_nr);      // Start the timer
+    to_physical_layer( &s );      // Transmit the frame
+    start_timer( frame_nr );      // Start the timer
 }
 
 // Wait for an event to happen; return its type in event
@@ -67,6 +70,15 @@ void enable_upper_layer() {
 // Forbid GBN from getting packets from outgoing datalink buffer
 void disable_upper_layer() {
     upperLayerEnabled = false;
+}
+
+// Thread to wait for packets to arrive from the physical layer
+void gbnWait() {
+
+    while (1) {
+        
+    }
+
 }
 
 // Go-back-N algorithm
