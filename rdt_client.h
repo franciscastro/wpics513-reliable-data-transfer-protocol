@@ -391,10 +391,10 @@ void *receiver(void *param) {
 	else {
 		int sent = sendDataToServer(&toSend);
 	}
-	memset(&toSend, 0, sizeof(struct packet));	// Empty the struct
+	memset( &toSend, 0, sizeof(Packet) );	// Empty the struct
 
 	// While connection with server is alive
-	while(isconnected) {
+	while( isconnected ) {
 
 		// recv() data from the socket
 		recvd = recv(client_sockfd, (void *)&msgrecvd, sizeof(struct packet), 0);
@@ -464,8 +464,7 @@ void *receiver(void *param) {
 			//fprintf(stdout, "%s\n", msgrecvd.message);
 		}
 
-		// Make sure the struct is empty
-		memset(&msgrecvd, 0, sizeof(struct packet));
+		memset( &msgrecvd, 0, sizeof(Packet) );		// Empty the struct
 	}
 }
 
