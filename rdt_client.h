@@ -21,6 +21,7 @@ typedef struct ThreadData {
 } ThreadData;
 
 char* removeSpace(char *s);
+void allCaps(char *command);
 void parseCommand(char * command);
 void *get_in_addr(struct sockaddr *sa);
 int fetchServerHostname(char *hostname);
@@ -32,7 +33,7 @@ off_t filesize(const char *filename);
 int sendDataToServer(struct packet *packet);
 int sendFilePackets();
 int createPacket(const char *command, struct packet *toSend);
-void allCaps(char *command);
+
 
 //=================================================================================
 
@@ -79,7 +80,7 @@ void parseCommand(char * command) {
 	if ( strcmp(params[0], CONNECT) == 0 ) {
 		client_sockfd = connectToServer();
 		//pthread_create(&waitDataThread, NULL, waitData, NULL);
-		if (client_sockfd == -1) {
+		if ( client_sockfd == -1 ) {
 			return;
 		}
 	} 
@@ -89,11 +90,11 @@ void parseCommand(char * command) {
 			printf( "Usage: %s [alias]\n", CHAT );
 			return;
 		}
-		createMessage( client_sockfd, params[0], params[1] );
+		createMessage( params[0], params[1] );
 	}
 	// QUIT 
 	else if ( strcmp(params[0], QUIT) == 0 ) {
-		createMessage( client_sockfd, params[0], params[1] );
+		createMessage( params[0], params[1] );
 	}
 	// TRANSFER
 	else if ( strcmp(params[0], TRANSFER ) == 0) {
@@ -101,7 +102,7 @@ void parseCommand(char * command) {
 			printf( "Usage: %s [filename]\n", TRANSFER );
 			return;
 		}
-		createMessage( client_sockfd, params[0], params[1] );
+		createMessage( params[0], params[1] );
 	}
 	// HELP
 	else if ( strcmp(params[0], HELP) == 0) {
@@ -113,7 +114,7 @@ void parseCommand(char * command) {
 			printf( "Usage: %s [message]\n", MESSAGE );
 			return;
 		}
-		createMessage( client_sockfd, params[0], params[1] );
+		createMessage( params[0], params[1] );
 	}
 	// EXIT
 	else if ( strcmp(params[0], EXIT ) == 0) {
@@ -125,12 +126,143 @@ void parseCommand(char * command) {
 	}
 	// CONFIRM
 	else if ( strcmp(params[0], CONFIRM) == 0 ) {
-		createMessage( client_sockfd, params[0], params[1] );
+		createMessage( params[0], params[1] );
 	}
 	// INVALID INPUT
 	else {
 		printf( "Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP );
 	}
+}
+
+//=================================================================================
+
+
+// Creates message to be sent out
+void createMessage(const char* command, const char* message) {
+
+	// Create packet
+	// Packet * msg = malloc(sizeof(msg));
+	Packet msg;
+
+	if ( strcmp(command, CONNECT) == 0 ) {
+		//(*msg)->msgType = CONNECT_M;
+		msg.msgType = CONNECT_M;
+		//strncpy(msg->data, message, strlen(message));
+		strncpy( msg.data, message, strlen(message) );
+	}
+	else if ( strcmp(command, CHAT) == 0 ) {
+		//(*msg)->msgType = CHAT_M;
+		msg.msgType = CHAT_M;
+		//strncpy( msg->data, message, strlen(message) );
+		strncpy( msg.data, message, strlen(message) );
+	}
+	else if ( strcmp(command, QUIT ) == 0) {
+		(*msg)->msgType = QUIT_M;
+	}
+	else if ( strcmp(command, TRANSFER ) == 0) {
+		msg->msgType = TRANSFER_M;
+		//strncpy(msg->data, message, strlen(message));
+		// Send message to datalink
+	}
+	else if ( strcmp(command, MESSAGE) == 0 ) {
+		//msg->msgType = MESSAGE_M;
+		//strncpy(msg->data, message, strlen(message));
+		//strncpy( msg.data, message, strlen(message) );
+	}
+	if ( strcmp(command, CHAT) == 0 ) {
+		//(*msg)->msgType = CONFIRM_M;
+		msg.msgType = CONFIRM_M;
+		//strncpy(msg->data, message, strlen(message));
+		strncpy( msg.data, message, strlen(message) );
+	}
+
+	datalinkSend( client_sockfd, msg );
+}
+
+//=================================================================================
+
+// Send a message to the server
+int sendDataToServer(struct packet *packet) {
+
+	int packetlen = sizeof *packet;
+	int total = 0;				// How many bytes we've sent
+    int bytesleft = packetlen;	// How many we have left to send
+    int n;
+
+    // To make sure all data is sent
+    while(total < packetlen) {
+
+        n = send(client_sockfd, (packet + total), bytesleft, 0);
+        
+        if (n == -1) { break; }
+        
+        total += n;
+        bytesleft -= n;
+
+    }
+
+    packetlen = total;	// Return number actually sent here
+
+    memset(packet, 0, sizeof(struct packet));	// Empty the struct
+	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
+}
+
+//=================================================================================
+
+// Chunk a file and send file packets to datalink
+void sendFilePackets(const char* filename) {
+	
+	// Create file pointer
+	FILE *fp = fopen(filename, "rb");
+	
+	// If file does not exist
+	if ( fp == NULL ) {
+		fprintf( stderr, "File open error. Check your file name.\n" );
+		return;
+	}
+
+	// If file is > 100 MB, don't send
+	int fullsize = filesize( filename );
+	if ( fullsize > 104857600 ) {
+		printf( "Sending files > 100 MB is prohibited.\n" );
+		return;
+	}
+	else {
+		printf( "File size: %i bytes\n", fullsize );
+	}	
+
+	// Read and send file packets
+	while( !feof(fp) ){
+
+		// file buffer to store chunks of files
+		char filebuff[MAXDATA];
+
+		// Create packet
+		Packet msg;
+		msg.msgType = TRANSFER_M;
+		strncpy( msg.filename, filename, strlen(filename) );
+
+		// Read data from file
+		int numread = fread( msg.data, 1, MAXDATA, fp );
+		printf( "Bytes read: %i\n", numread );
+		
+		// Send data to datalink
+		datalinkSend( client_sockfd, msg );
+
+		memset( &msg, 0, sizeof(Packet) );	// Empty the struct
+	}
+
+	fclose(fp);
+
+	// File end packet
+	Packet msg;
+	strncpy( msg.msgType, TRANSFER_END_M, sizeof(TRANSFER_END_M) );
+	strncpy( msg.filename, filename, strlen(filename) );
+	
+	// Send data to datalink
+	datalinkSend( client_sockfd, msg );
+	
+	memset( &msg, 0, sizeof(Packet) );	// Empty the struct
 }
 
 //=================================================================================
@@ -177,24 +309,6 @@ int fetchServerHostname(char *hostname) {
 
 	fclose(fp);
 	return 1;
-}
-
-//=================================================================================
-
-// Translates user's command into this program's integer representation
-int commandTranslate(char *command) {
-
-	if (strcmp(command,"CONNECT") == 0) { return 1; }
-	else if (strcmp(command, "CHAT") == 0) { return 2; }
-	else if (strcmp(command,"QUIT") == 0) { return 3; }
-	else if (strcmp(command, "TRANSFER") == 0) { return 4; }
-	else if (strcmp(command, "FLAG") == 0) { return 5; }
-	else if (strcmp(command, "HELP") == 0) { return 6; }
-	else if (strcmp(command, "MESSAGE") == 0) { return 7; }
-	else if (strcmp(command, "EXIT") == 0) { return 8; }
-	else if (strcmp(command, "CONFIRM") == 0) { return 9; }
-	else { return -1; }
-
 }
 
 //=================================================================================
@@ -436,105 +550,6 @@ off_t filesize(const char *filename) {
 
 //=================================================================================
 
-// Send a message to TCR server
-int sendDataToServer(struct packet *packet) {
-
-	int packetlen = sizeof *packet;
-	int total = 0;				// How many bytes we've sent
-    int bytesleft = packetlen;	// How many we have left to send
-    int n;
-
-    // To make sure all data is sent
-    while(total < packetlen) {
-
-        n = send(client_sockfd, (packet + total), bytesleft, 0);
-        
-        if (n == -1) { break; }
-        
-        total += n;
-        bytesleft -= n;
-
-    }
-
-    packetlen = total;	// Return number actually sent here
-
-    memset(packet, 0, sizeof(struct packet));	// Empty the struct
-	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
-}
-
-//=================================================================================
-
-// Send a file to the server, returns 0 on success
-int sendFilePackets() {
-
-	// Get file name from user
-	char filename[50];
-	fprintf(stdout, "File to send: ");
-	fgets(filename, sizeof filename, stdin);
-	
-	// Manual removal of newline character
-	int len = strlen(filename);
-	if (len > 0 && filename[len-1] == '\n') { filename[len-1] = '\0'; }
-
-	// If file is > 100 MB, don't send
-	int fullsize = filesize(filename);
-	if (fullsize > 104857600) {
-		fprintf(stdout, "Sending files > 100 MB is prohibited.\n");
-		return 1;
-	}
-	else {
-		fprintf(stdout, "File size: %i bytes\n", fullsize);
-	}
-	
-	// Create file pointer
-	FILE *fp = fopen(filename, "rb");
-	
-	// If file does not exist
-	if (fp == NULL) {
-		fprintf(stdout, "File open error. Check your file name.\n");
-		return 1;
-	}
-
-	// Read and send file packets
-	while(!feof(fp)){
-
-		// file buffer to store chunks of files
-		char filebuff[MAXMESSAGESIZE];
-
-		// Outbound data packet
-		struct packet outbound;
-		strncpy(outbound.command, "TRANSFER", MAXCOMMANDSIZE);
-		strncpy(outbound.filename, filename, MAXCOMMANDSIZE);
-
-		// Read data from file
-		int numread = fread(outbound.message, 1, MAXMESSAGESIZE, fp);
-		//fprintf(stdout, "Bytes read: %i\n", numread);
-		//strncpy(outbound.message, filebuff, MAXMESSAGESIZE);
-		outbound.filebytesize = numread;
-
-		strncpy(outbound.alias, alias, MAXCOMMANDSIZE);
-		
-		// Send data to server
-		sendDataToServer(&outbound);
-
-		memset(&outbound, 0, sizeof(struct packet));	// Empty the struct
-	}
-
-	fclose(fp);
-
-	// File end packet
-	struct packet outbound;
-	strncpy(outbound.command, "TRANSFER_END", MAXCOMMANDSIZE);
-	strncpy(outbound.filename, filename, MAXCOMMANDSIZE);
-	sendDataToServer(&outbound);
-	memset(&outbound, 0, sizeof(struct packet));	// Empty the struct
-
-	return 0;
-
-}
-
-//=================================================================================
-
 // Creates packet to be sent out, returns -1 on error
 int createPacket(const char *command, struct packet *toSend) {
 
@@ -610,39 +625,6 @@ int createPacket(const char *command, struct packet *toSend) {
 		return 1;
 	}
 
-}
-
-//=================================================================================
-
-// Creates message to be sent out, returns -1 on error
-int createMessage(int c_sockfd, const char* command, const char* message) {
-
-	// Create packet
-	Packet * msg = malloc(sizeof(msg));
-
-	if (strcmp(command, CHAT) == 0) {
-		msg->msgType = CHAT_M;
-		strncpy(msg->data, message, strlen(message));
-		datalinkSend( c_sockfd, msg );
-		return 1;
-	}
-	else if (strcmp(command, QUIT) == 0) {
-		msg->msgType = QUIT_M;
-		datalinkSend(c_sockfd, msg);
-		return 1;
-	}
-	else if (strcmp(command, TRANSFER) == 0) {
-		msg->msgType = TRANSFER_M;
-		//strncpy(msg->data, message, strlen(message));
-		// Send message to datalink
-		return 1;
-	}
-	else if (strcmp(command, MESSAGE) == 0) {
-		msg->msgType = MESSAGE_M;
-		strncpy(msg->data, message, strlen(message));
-		datalinkSend(c_sockfd, msg);
-		return 1;
-	}
 }
 
 //=================================================================================
