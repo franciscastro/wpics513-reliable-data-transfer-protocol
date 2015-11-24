@@ -1,59 +1,28 @@
 /*
 Authors: Francisco Castro, Antonio Umali
-CS 513 Project 1 - Chat Roulette
-Last modified: 12 Oct 2015
+CS 513 Project 2 - Reliable Data Transfer Protocol
+Last modified: 23 Oct 2015
 
-This is the TCR client header file.
+Client header file.
 */
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#ifndef RDT_CLIENT_H_
+#define RDT_CLIENT_H_
 
+#include "config.h"
 
-#define MAXMESSAGESIZE 1024
-#define MAXCOMMANDSIZE 20
+int sockfd;				// Socket file descriptor for communicating to remote host
+int isconnected = 0;	// 1 if already connected to server, 0, -1, -2, otherwise (see connectToHost())
+int specialcommand = 0;	// For non-user special command cases; 1 - FILE_ACCEPT
 
-// Socket file descriptor for communicating to remote host
-int sockfd;
-
-// 1 if already connected to server, 
-// 0, -1, -2, otherwise (see connectToHost())
-int isconnected = 0;
-
-// This client's alias
-char alias[MAXCOMMANDSIZE];	
-
-// For non-user special command cases
-// 1 - FILE_ACCEPT
-int specialcommand = 0;
-
-
-struct packet {
-	char command[MAXCOMMANDSIZE];	// Command triggered
-	char message[MAXMESSAGESIZE];	// Data
-	char alias[MAXCOMMANDSIZE];		// Client alias
-	char filename[MAXCOMMANDSIZE];	// File name if needed
-	int filebytesize;				// Size in bytes of message
-};
+char alias[MAXCOMMANDSIZE];		// This client's alias
 
 struct threaddata {
 	pthread_t thread_ID;	// This thread's pointer
 };
 
+char* removeSpace(char *s);
+void parseCommand(char * command);
 void *get_in_addr(struct sockaddr *sa);
 int fetchServerHostname(char *hostname);
 int commandTranslate(char *command);
@@ -68,6 +37,78 @@ void allCaps(char *command);
 
 //=================================================================================
 
+// Remove whitespace
+char* removeSpace(char *s) {
+
+    size_t size = strlen(s);	// Check for valid length
+    if (!size) { return s; }
+
+    char *end = s + size - 1;
+    while (end >= s && isspace(*end)) { end--; }
+
+    *(end + 1) = '\0';	// Terminate this string
+
+    while (*s && isspace(*s)) { s++; }
+    
+    return s;
+}
+
+// Parse client commands
+void parseCommand(char * command) {
+
+	const char *delimiter = " ";
+
+	// Split the command and entry
+	char *token = strsep(&command, delimiter);
+	char *params[2] = {0};
+	params[0] = token;
+	params[1] = command;
+
+	if (strcmp(params[0], CONNECT) == 0) {
+		client_sockfd = connectToServer();
+		//pthread_create(&waitDataThread, NULL, waitData, NULL);
+		if (client_sockfd == -1) {
+			return;
+		}
+	} 
+	else if (strcmp(params[0], CHAT) == 0) {
+		if (params[1] == NULL) {
+			printf("Usage: %s [alias]\n", CHAT);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
+	} 
+	else if (strcmp(params[0], QUIT) == 0) {
+		createMessage(client_sockfd, params[0], params[1]);
+	}
+	else if (strcmp(params[0], TRANSFER) == 0) {
+		if (params[1] == NULL) {
+			printf("Usage: %s [filename]\n", TRANSFER);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
+	} 
+	else if (strcmp(params[0], HELP) == 0) {
+		help();
+	}
+	else if (strcmp(params[0], MESSAGE) == 0) {
+		if (params[1] == NULL) {
+			printf("Usage: %s [message]\n", MESSAGE);
+			return;
+		}
+		createMessage(client_sockfd, params[0], params[1]);
+	}
+	else if (strcmp(params[0], EXIT) == 0) {
+		printf("Closing the chat client...\n");
+		isConnected = 0;
+		close(client_sockfd);
+		printf("Any active sockets closed.\n");
+		exit(1);
+	}
+	else {
+		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
+	}
+}
 
 // Get sockaddr, IPv4 or IPv6
 void *get_in_addr(struct sockaddr *sa) {
@@ -529,6 +570,36 @@ int createPacket(const char *command, struct packet *toSend) {
 
 }
 
+// Creates message to be sent out, returns -1 on error
+int createMessage(int c_sockfd, const char* command, const char* message) {
+
+	Packet * msg = malloc(sizeof(msg));
+
+	if (strcmp(command, CHAT) == 0) {
+		msg->msgType = CHAT_M;
+		strncpy(msg->data, message, strlen(message));
+		datalinkSend( c_sockfd, msg );
+		return 1;
+	}
+	else if (strcmp(command, QUIT) == 0) {
+		msg->msgType = QUIT_M;
+		datalinkSend(c_sockfd, msg);
+		return 1;
+	}
+	else if (strcmp(command, TRANSFER) == 0) {
+		msg->msgType = TRANSFER_M;
+		//strncpy(msg->data, message, strlen(message));
+		// Send message to datalink
+		return 1;
+	}
+	else if (strcmp(command, MESSAGE) == 0) {
+		msg->msgType = MESSAGE_M;
+		strncpy(msg->data, message, strlen(message));
+		datalinkSend(c_sockfd, msg);
+		return 1;
+	}
+}
+
 // Convert strings to all uppercase
 void allCaps(char *command) {
 	while(*command != '\0') {
@@ -536,3 +607,18 @@ void allCaps(char *command) {
 		command++;
 	}
 }
+
+// Show client commands
+void help() {
+	printf("Client commands:\n");
+	printf("\t%-10s connect to the server\n", CONNECT);
+	printf("\t%-10s request for a chat partner\n", CHAT);
+	printf("\t%-10s quit the current chat channel\n", QUIT);
+	printf("\t%-10s send a file to chat partner\n", TRANSFER);
+	printf("\t%-10s print this help information\n", HELP);
+	printf("\t%-10s send a message to chat partner\n", MESSAGE);
+	printf("\t%-10s terminate and exit the program\n", EXIT);
+	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
+}
+
+#endif
