@@ -26,27 +26,18 @@ Header file for shared definitions
 #include <sys/types.h>
 #include <sys/stat.h>
 
-// [USER INPUT]
-#define USERCOMMAND 70
-
-// [CONNECTION]
+// [ CONNECTION ]
 #define HOSTNAME	"CS"	// The target hostname
 #define PORT 		"3490" 	// The port client will be connecting to
 
-// [TRANSFER PROTOCOL]
+// [ TRANSFER PROTOCOL ]
 #define WINDOWSIZE 	5		// Window size for transfer protocol
 
-// [APPLICATION LAYER]
-#define MAXDATASIZE 	1000 	// Max number of bytes we can get at once
-#define FILENAMESIZE	20		// Max size of filenames
-#define MAXCOMMANDSIZE	30		// Max size of commands
-#define MAXDATA			100		// Max size of data
-
-// [DATALINK]
+// [ DATALINK LAYER ]
 #define GOBACKN		1	// Go-back-N transfer protocol
 #define SELREPEAT	2	// Selective repeat transfer protocol
 
-// [CLIENT COMMANDS]
+// [ CLIENT / APPLICATION LAYER ]
 #define CONNECT		"-connect"		// Connect to server
 #define CHAT		"-chat"			// Request for chat partner
 #define QUIT		"-quit"			// Quit the chat channel
@@ -55,6 +46,12 @@ Header file for shared definitions
 #define MESSAGE		"-message"		// Send a message to chat partner
 #define EXIT		"-exit"			// Terminate and exit the program
 #define CONFIRM		"-confirm"		// Check with server if you are in chat queue
+#define MAXDATASIZE 	1000 	// Max number of bytes we can get at once
+#define FILENAMESIZE	30		// Max size of filenames
+#define MAXCOMMANDSIZE	30		// Max size of commands
+#define ALIASSIZE		30		// Max size of client alias
+#define MAXDATA			100		// Max size of data
+#define USERINPUT 		100		// Max size of user input
 
 // Boolean type
 typedef enum {
@@ -64,14 +61,16 @@ typedef enum {
 
 // Message type
 typedef enum {
-	CONNECT_M,
-	CHAT_M,
-	QUIT_M,
-	TRANSFER_M,
-	HELP_M,
-	MESSAGE_M,
-	EXIT_M,
-	CONFIRM_M,
+	CONNECT_M,		// Connect to server
+	CHAT_M,			// Request for chat partner
+	QUIT_M,			// Quit the chat channel
+	TRANSFER_M,		// Send a file to chat partner
+	HELP_M,			// Show available commands
+	MESSAGE_M,		// Send a message to chat partner
+	MESSAGE_C_M,	// Send a message (complete) to chat partner
+	EXIT_M,			// Terminate and exit the program
+	CONFIRM_M,		// Check with server if you are in chat queue
+	TRANSFER_END_M,	// Flag end of file transfer
 } MessageType;
 
 // Event type
@@ -92,6 +91,7 @@ typedef enum {
 // Application packet
 typedef struct Packet {
 	MessageType msgType;
+	char partnerAlias[ALIASSIZE];
 	char filename[FILENAMESIZE];
 	char data[MAXDATA];
 } Packet;
@@ -101,6 +101,7 @@ typedef struct Frame {
 	int checksum;
 	int seqNumber;
 	int nextAckExpected;
+	int sockfd;
 	FrameType type;
 	Packet pkt;
 } Frame;

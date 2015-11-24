@@ -37,15 +37,15 @@ int main(int argc, char *argv[]) {
     }
     
 
-    char user_command[USERCOMMAND];		// For user command entries
+    char user_command[USERINPUT];		// For user command entries
 
     // Client main loop waits for input from user
     while (1) {
 
-    	memset(user_command, 0, USERCOMMAND);	// always clear out user_command
+    	memset(user_command, 0, USERINPUT);	// always clear out user_command
 		printf("CLIENT> "); 					// prompt user for command
 		
-		if (fgets(user_command, USERCOMMAND, stdin) == NULL) {
+		if (fgets(user_command, USERINPUT, stdin) == NULL) {
 			continue;
 		}
 

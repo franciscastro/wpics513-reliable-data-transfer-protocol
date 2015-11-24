@@ -14,7 +14,7 @@ Client header file.
 int client_sockfd;		// Socket file descriptor for communicating to remote host
 int isconnected = 0;	// 1 if already connected to server, 0, -1, -2, otherwise (see connectToHost())
 
-char alias[MAXCOMMANDSIZE];		// This client's alias
+char alias[ALIASSIZE];		// This client's alias
 
 typedef struct ThreadData {
 	pthread_t thread_ID;	// This thread's pointer
@@ -22,14 +22,15 @@ typedef struct ThreadData {
 
 char* removeSpace(char *s);
 void allCaps(char *command);
+off_t filesize(const char *filename);
 void parseCommand(char * command);
+void createMessage(const char* command, const char* message);
 void *get_in_addr(struct sockaddr *sa);
 int fetchServerHostname(char *hostname);
 int commandTranslate(char *command);
 int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
 void *receiver(void *param);
 void receivedDataHandler(struct packet *msgrecvd);
-off_t filesize(const char *filename);
 int sendDataToServer(struct packet *packet);
 int sendFilePackets();
 int createPacket(const char *command, struct packet *toSend);
@@ -61,6 +62,22 @@ void allCaps(char *command) {
 		*command = toupper(*command);
 		command++;
 	}
+}
+
+//=================================================================================
+
+// Determing file size, returns -1 on error
+off_t filesize(const char *filename) {
+	struct stat st;
+
+	// File size can be determined
+	if (stat(filename, &st) == 0) {
+		return st.st_size;
+	}
+
+	// File size cannot be determined
+	fprintf(stderr, "Cannot determine size of %s: %s\n", filename, strerror(errno));
+	return -1;
 }
 
 //=================================================================================
@@ -142,69 +159,37 @@ void createMessage(const char* command, const char* message) {
 
 	// Create packet
 	// Packet * msg = malloc(sizeof(msg));
+	// (*msg)->msgType = CONNECT_M;
+	// strncpy(msg->data, message, strlen(message));
 	Packet msg;
 
 	if ( strcmp(command, CONNECT) == 0 ) {
-		//(*msg)->msgType = CONNECT_M;
 		msg.msgType = CONNECT_M;
-		//strncpy(msg->data, message, strlen(message));
 		strncpy( msg.data, message, strlen(message) );
 	}
 	else if ( strcmp(command, CHAT) == 0 ) {
-		//(*msg)->msgType = CHAT_M;
 		msg.msgType = CHAT_M;
-		//strncpy( msg->data, message, strlen(message) );
 		strncpy( msg.data, message, strlen(message) );
 	}
 	else if ( strcmp(command, QUIT ) == 0) {
 		(*msg)->msgType = QUIT_M;
 	}
 	else if ( strcmp(command, TRANSFER ) == 0) {
-		msg->msgType = TRANSFER_M;
-		//strncpy(msg->data, message, strlen(message));
-		// Send message to datalink
+		sendFilePackets(message);
+		return;
 	}
 	else if ( strcmp(command, MESSAGE) == 0 ) {
-		//msg->msgType = MESSAGE_M;
-		//strncpy(msg->data, message, strlen(message));
-		//strncpy( msg.data, message, strlen(message) );
-	}
-	if ( strcmp(command, CHAT) == 0 ) {
-		//(*msg)->msgType = CONFIRM_M;
 		msg.msgType = CONFIRM_M;
-		//strncpy(msg->data, message, strlen(message));
+		strncpy( msg.data, message, strlen(message) );
+	}
+	else if ( strcmp(command, CONFIRM) == 0 ) {
+		msg.msgType = CONFIRM_M;
 		strncpy( msg.data, message, strlen(message) );
 	}
 
 	datalinkSend( client_sockfd, msg );
-}
 
-//=================================================================================
-
-// Send a message to the server
-int sendDataToServer(struct packet *packet) {
-
-	int packetlen = sizeof *packet;
-	int total = 0;				// How many bytes we've sent
-    int bytesleft = packetlen;	// How many we have left to send
-    int n;
-
-    // To make sure all data is sent
-    while(total < packetlen) {
-
-        n = send(client_sockfd, (packet + total), bytesleft, 0);
-        
-        if (n == -1) { break; }
-        
-        total += n;
-        bytesleft -= n;
-
-    }
-
-    packetlen = total;	// Return number actually sent here
-
-    memset(packet, 0, sizeof(struct packet));	// Empty the struct
-	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
+	memset( &msg, 0, sizeof(Packet) );	// Empty the struct
 }
 
 //=================================================================================
@@ -267,6 +252,21 @@ void sendFilePackets(const char* filename) {
 
 //=================================================================================
 
+// Show client commands
+void help() {
+	printf("Client commands:\n");
+	printf("\t%-10s connect to the server\n", CONNECT);
+	printf("\t%-10s request for a chat partner\n", CHAT);
+	printf("\t%-10s quit the current chat channel\n", QUIT);
+	printf("\t%-10s send a file to chat partner\n", TRANSFER);
+	printf("\t%-10s print this help information\n", HELP);
+	printf("\t%-10s send a message to chat partner\n", MESSAGE);
+	printf("\t%-10s terminate and exit the program\n", EXIT);
+	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
+}
+
+//=================================================================================
+
 // Get sockaddr, IPv4 or IPv6
 void *get_in_addr(struct sockaddr *sa) {
 
@@ -278,37 +278,6 @@ void *get_in_addr(struct sockaddr *sa) {
 
 	// else, sockaddr is IPv6
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
-//=================================================================================
-
-// Get server hostname from file HOSTNAME
-// Returns 1 on success, 0 on error
-int fetchServerHostname(char *hostname) {
-
-	char hostfile[] = "HOSTNAME";
-
-	// Create file pointer
-	FILE *fp = fopen(hostfile, "rb");
-	
-	// If file does not exist
-	if (fp == NULL) {
-		fprintf(stdout, "File open error. Make sure HOSTNAME file exists.\n\n");
-		return 0;
-	}
-
-	while (!feof(fp)) {
-		fread(hostname, 1, filesize(hostfile), fp);
-	}
-
-	// Manual removal of newline character
-	int len = strlen(hostname);
-	if (len > 0 && hostname[len-1] == '\n') {
-		hostname[len-1] = '\0';
-	}
-
-	fclose(fp);
-	return 1;
 }
 
 //=================================================================================
@@ -403,7 +372,9 @@ int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error
 void *receiver(void *param) {
 	
 	int recvd;
-	struct packet msgrecvd;
+	Packet msgrecvd;
+
+	// File variables
 	FILE *fp;
 	int isReceiving = 0;	// 0 - not receiving files, 1 - receiving files
 	char fileRecvName[MAXCOMMANDSIZE];
@@ -413,7 +384,7 @@ void *receiver(void *param) {
 	isconnected = 1;
 
 	// Send confirm to server
-	struct packet toSend;
+	Packet toSend;
 	if(createPacket("CONFIRM", &toSend) == -1) {
 		fprintf(stderr, "Can't create data to send. Try again.\n");
 	}
@@ -501,55 +472,39 @@ void *receiver(void *param) {
 //=================================================================================
 
 // Handling recv()ed messages from the socket
-void receivedDataHandler(struct packet *msgrecvd) {
+void receivedDataHandler(Packet *msgrecvd) {
 
 	if (strcmp((*msgrecvd).command, "ACKN") == 0) {
 		//fprintf(stdout, "You are added in the chat queue\n");
-		fprintf(stdout, "%s\n", (*msgrecvd).message);
+		printf( "%s\n", (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "IN SESSION") == 0) {
 		// fprintf(stdout, "Now on a channel with: %s\n", (*msgrecvd).message);
-		fprintf(stdout, "%s\n", (*msgrecvd).message);
+		printf( "%s\n", (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "QUIT") == 0) {
 		//fprintf(stdout, "You have quit the channel \n");
-		fprintf(stdout, "%s\n", (*msgrecvd).message);
+		printf( "%s\n", (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "HELP") == 0) {
 		//fprintf(stdout, "Commands available:\n %s\n", (*msgrecvd).message );
-		fprintf(stdout, "%s\n", (*msgrecvd).message);
+		printf( "%s\n", (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "MESSAGE") == 0) {
-		fprintf(stdout, "[ %s ]: %s\n", (*msgrecvd).alias, (*msgrecvd).message );
+		printf( "[ %s ]: %s\n", (*msgrecvd).partnerAlias, (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "CHAT_ACK") == 0) {
-		fprintf(stdout, "Now chatting with %s\n", (*msgrecvd).alias);
+		printf( "Now chatting with %s\n", (*msgrecvd).partnerAlias );
 	}
 	else if (strcmp((*msgrecvd).command, "NOTIF") == 0) {
-		fprintf(stdout, "%s\n", (*msgrecvd).message);
+		printf( "%s\n", (*msgrecvd).data );
 	}
 
 }
 
 //=================================================================================
 
-// Determing file size, returns -1 on error
-off_t filesize(const char *filename) {
-	struct stat st;
-
-	// File size can be determined
-	if (stat(filename, &st) == 0) {
-		return st.st_size;
-	}
-
-	// File size cannot be determined
-	fprintf(stderr, "Cannot determine size of %s: %s\n", filename, strerror(errno));
-	return -1;
-
-}
-
-//=================================================================================
-
+// FROM TCR_CLIENT: DON'T USE
 // Creates packet to be sent out, returns -1 on error
 int createPacket(const char *command, struct packet *toSend) {
 
@@ -629,17 +584,61 @@ int createPacket(const char *command, struct packet *toSend) {
 
 //=================================================================================
 
-// Show client commands
-void help() {
-	printf("Client commands:\n");
-	printf("\t%-10s connect to the server\n", CONNECT);
-	printf("\t%-10s request for a chat partner\n", CHAT);
-	printf("\t%-10s quit the current chat channel\n", QUIT);
-	printf("\t%-10s send a file to chat partner\n", TRANSFER);
-	printf("\t%-10s print this help information\n", HELP);
-	printf("\t%-10s send a message to chat partner\n", MESSAGE);
-	printf("\t%-10s terminate and exit the program\n", EXIT);
-	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
+// FROM TCR_CLIENT: DON'T USE
+// Send a message to the server
+int sendDataToServer(Packet *packet) {
+
+	int packetlen = sizeof *packet;
+	int total = 0;				// How many bytes we've sent
+    int bytesleft = packetlen;	// How many we have left to send
+    int n;
+
+    // To make sure all data is sent
+    while ( total < packetlen ) {
+
+        n = send(client_sockfd, (packet + total), bytesleft, 0);
+        
+        if (n == -1) { break; }
+        
+        total += n;
+        bytesleft -= n;
+    }
+
+    packetlen = total;	// Return number actually sent here
+
+    memset(packet, 0, sizeof(struct packet));	// Empty the struct
+	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
+}
+
+//=================================================================================
+
+// FROM TCR_CLIENT: DON'T USE
+// Get server hostname from file HOSTNAME; Returns 1 on success, 0 on error
+int fetchServerHostname(char *hostname) {
+
+	char hostfile[] = "HOSTNAME";
+
+	// Create file pointer
+	FILE *fp = fopen(hostfile, "rb");
+	
+	// If file does not exist
+	if (fp == NULL) {
+		fprintf(stdout, "File open error. Make sure HOSTNAME file exists.\n\n");
+		return 0;
+	}
+
+	while (!feof(fp)) {
+		fread(hostname, 1, filesize(hostfile), fp);
+	}
+
+	// Manual removal of newline character
+	int len = strlen(hostname);
+	if (len > 0 && hostname[len-1] == '\n') {
+		hostname[len-1] = '\0';
+	}
+
+	fclose(fp);
+	return 1;
 }
 
 //=================================================================================
