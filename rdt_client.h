@@ -11,22 +11,21 @@ Client header file.
 
 #include "config.h"
 
-int sockfd;				// Socket file descriptor for communicating to remote host
+int client_sockfd;		// Socket file descriptor for communicating to remote host
 int isconnected = 0;	// 1 if already connected to server, 0, -1, -2, otherwise (see connectToHost())
-int specialcommand = 0;	// For non-user special command cases; 1 - FILE_ACCEPT
 
 char alias[MAXCOMMANDSIZE];		// This client's alias
 
-struct threaddata {
+typedef struct ThreadData {
 	pthread_t thread_ID;	// This thread's pointer
-};
+} ThreadData;
 
 char* removeSpace(char *s);
 void parseCommand(char * command);
 void *get_in_addr(struct sockaddr *sa);
 int fetchServerHostname(char *hostname);
 int commandTranslate(char *command);
-int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
+int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
 void *receiver(void *param);
 void receivedDataHandler(struct packet *msgrecvd);
 off_t filesize(const char *filename);
@@ -55,60 +54,82 @@ char* removeSpace(char *s) {
 
 //=================================================================================
 
+// Convert strings to all uppercase
+void allCaps(char *command) {
+	while(*command != '\0') {
+		*command = toupper(*command);
+		command++;
+	}
+}
+
+//=================================================================================
+
 // Parse client commands
 void parseCommand(char * command) {
 
 	const char *delimiter = " ";
 
 	// Split the command and entry
-	char *token = strsep(&command, delimiter);
+	char *token = strsep( &command, delimiter );
 	char *params[2] = {0};
 	params[0] = token;
 	params[1] = command;
 
-	if (strcmp(params[0], CONNECT) == 0) {
+	// CONNECT
+	if ( strcmp(params[0], CONNECT) == 0 ) {
 		client_sockfd = connectToServer();
 		//pthread_create(&waitDataThread, NULL, waitData, NULL);
 		if (client_sockfd == -1) {
 			return;
 		}
 	} 
-	else if (strcmp(params[0], CHAT) == 0) {
-		if (params[1] == NULL) {
-			printf("Usage: %s [alias]\n", CHAT);
+	// CHAT
+	else if ( strcmp(params[0], CHAT) == 0 ) {
+		if ( params[1] == NULL ) {
+			printf( "Usage: %s [alias]\n", CHAT );
 			return;
 		}
-		createMessage(client_sockfd, params[0], params[1]);
-	} 
-	else if (strcmp(params[0], QUIT) == 0) {
-		createMessage(client_sockfd, params[0], params[1]);
+		createMessage( client_sockfd, params[0], params[1] );
 	}
-	else if (strcmp(params[0], TRANSFER) == 0) {
-		if (params[1] == NULL) {
-			printf("Usage: %s [filename]\n", TRANSFER);
+	// QUIT 
+	else if ( strcmp(params[0], QUIT) == 0 ) {
+		createMessage( client_sockfd, params[0], params[1] );
+	}
+	// TRANSFER
+	else if ( strcmp(params[0], TRANSFER ) == 0) {
+		if ( params[1] == NULL ) {
+			printf( "Usage: %s [filename]\n", TRANSFER );
 			return;
 		}
-		createMessage(client_sockfd, params[0], params[1]);
-	} 
-	else if (strcmp(params[0], HELP) == 0) {
+		createMessage( client_sockfd, params[0], params[1] );
+	}
+	// HELP
+	else if ( strcmp(params[0], HELP) == 0) {
 		help();
 	}
-	else if (strcmp(params[0], MESSAGE) == 0) {
-		if (params[1] == NULL) {
-			printf("Usage: %s [message]\n", MESSAGE);
+	// MESSAGE
+	else if ( strcmp(params[0], MESSAGE) == 0 ) {
+		if ( params[1] == NULL ) {
+			printf( "Usage: %s [message]\n", MESSAGE );
 			return;
 		}
-		createMessage(client_sockfd, params[0], params[1]);
+		createMessage( client_sockfd, params[0], params[1] );
 	}
-	else if (strcmp(params[0], EXIT) == 0) {
-		printf("Closing the chat client...\n");
+	// EXIT
+	else if ( strcmp(params[0], EXIT ) == 0) {
+		printf( "Closing the chat client...\n" );
 		isConnected = 0;
-		close(client_sockfd);
-		printf("Any active sockets closed.\n");
+		close( client_sockfd );
+		printf( "Active sockets closed.\n" );
 		exit(1);
 	}
+	// CONFIRM
+	else if ( strcmp(params[0], CONFIRM) == 0 ) {
+		createMessage( client_sockfd, params[0], params[1] );
+	}
+	// INVALID INPUT
 	else {
-		printf("Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP);
+		printf( "Invalid command: %s. \nType '%s' for command list.\n", params[0], HELP );
 	}
 }
 
@@ -183,7 +204,7 @@ int commandTranslate(char *command) {
 //			-2 on fail to connect a socket to remote host
 //			-3 on fail to create thread for recv()ing data
 //			 1 on successful connect
-int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p) {
+int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p) {
 
 	// [ Load up address structs with getaddrinfo() ]
 	//=================================================================================
@@ -197,8 +218,7 @@ int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo
 	// - error: getaddrinfo() returns non-zero
 	// - success: *servinfo will point to a linked list of struct addrinfo,
 	//			  each of which contains a struct sockaddr to be used later
-	if (((*error_status) = getaddrinfo(hostname, PORT, hints, &(*servinfo))) != 0) 
-	{
+	if (((*error_status) = getaddrinfo(hostname, PORT, hints, &(*servinfo))) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror((*error_status)));
 		return -1;
 	}
@@ -210,11 +230,11 @@ int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo
 	//=================================================================================
 
 	// Loop through all the results in *servinfo and bind to the first we can
-	for((*p) = (*servinfo); (*p) != NULL; (*p) = (*p)->ai_next) 
-	{
+	for((*p) = (*servinfo); (*p) != NULL; (*p) = (*p)->ai_next) {
+		
 		// Make a socket
-		// - assign a socket descriptor to sockfd on success, -1 on error
-		if ((sockfd = socket((*p)->ai_family, (*p)->ai_socktype, (*p)->ai_protocol)) == -1) 
+		// - assign a socket descriptor to client_sockfd on success, -1 on error
+		if ((client_sockfd = socket((*p)->ai_family, (*p)->ai_socktype, (*p)->ai_protocol)) == -1) 
 		{
 			perror("Client socket");
 			continue;
@@ -222,9 +242,9 @@ int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo
 
 		// Connect to a remote host in the destination port and IP address
 		// - returns -1 on error and sets errno to the error's value
-		if (connect(sockfd, (*p)->ai_addr, (*p)->ai_addrlen) == -1) 
+		if (connect(client_sockfd, (*p)->ai_addr, (*p)->ai_addrlen) == -1) 
 		{
-			close(sockfd);
+			close(client_sockfd);
 			perror("Client connect");
 			continue;
 		}
@@ -247,12 +267,12 @@ int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo
 	if(pthread_create(&newthread.thread_ID, NULL, receiver, (void *)&newthread)) 
 	{
 		fprintf(stderr, "Error creating recv() thread. Try connecting again.\n");
-		close(sockfd);
+		close(client_sockfd);
 		return -3;
 	}
 
 	// Prompt client that it is now waiting to recv() on pthread
-	fprintf(stdout, "Now waiting for data on [%i]...\n", sockfd);
+	fprintf(stdout, "Now waiting for data on [%i]...\n", client_sockfd);
 
 	// Set isconnected flag since client successfully connected to server
 	isconnected = 1;
@@ -292,12 +312,12 @@ void *receiver(void *param) {
 	while(isconnected) {
 
 		// recv() data from the socket
-		recvd = recv(sockfd, (void *)&msgrecvd, sizeof(struct packet), 0);
+		recvd = recv(client_sockfd, (void *)&msgrecvd, sizeof(struct packet), 0);
 		
 		if (!recvd) {
 			fprintf(stderr, "Server connection lost. \n");
 			isconnected = 0;
-			close(sockfd);
+			close(client_sockfd);
 			break;
 		}
 
@@ -427,7 +447,7 @@ int sendDataToServer(struct packet *packet) {
     // To make sure all data is sent
     while(total < packetlen) {
 
-        n = send(sockfd, (packet + total), bytesleft, 0);
+        n = send(client_sockfd, (packet + total), bytesleft, 0);
         
         if (n == -1) { break; }
         
@@ -622,16 +642,6 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 		strncpy(msg->data, message, strlen(message));
 		datalinkSend(c_sockfd, msg);
 		return 1;
-	}
-}
-
-//=================================================================================
-
-// Convert strings to all uppercase
-void allCaps(char *command) {
-	while(*command != '\0') {
-		*command = toupper(*command);
-		command++;
 	}
 }
 
