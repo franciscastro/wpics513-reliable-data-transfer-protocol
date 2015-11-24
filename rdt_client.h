@@ -53,6 +53,8 @@ char* removeSpace(char *s) {
     return s;
 }
 
+//=================================================================================
+
 // Parse client commands
 void parseCommand(char * command) {
 
@@ -110,6 +112,8 @@ void parseCommand(char * command) {
 	}
 }
 
+//=================================================================================
+
 // Get sockaddr, IPv4 or IPv6
 void *get_in_addr(struct sockaddr *sa) {
 
@@ -122,6 +126,8 @@ void *get_in_addr(struct sockaddr *sa) {
 	// else, sockaddr is IPv6
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
+
+//=================================================================================
 
 // Get server hostname from file HOSTNAME
 // Returns 1 on success, 0 on error
@@ -152,6 +158,8 @@ int fetchServerHostname(char *hostname) {
 	return 1;
 }
 
+//=================================================================================
+
 // Translates user's command into this program's integer representation
 int commandTranslate(char *command) {
 
@@ -167,6 +175,8 @@ int commandTranslate(char *command) {
 	else { return -1; }
 
 }
+
+//=================================================================================
 
 // Connect to TCR server
 // Returns: -1 on getaddrinfo() fail
@@ -252,6 +262,8 @@ int connectToHost(char *PORT, struct addrinfo *hints, struct addrinfo **servinfo
 	//=================================================================================
 
 }
+
+//=================================================================================
 
 // For recv()ing messages from the socket
 void *receiver(void *param) {
@@ -352,6 +364,8 @@ void *receiver(void *param) {
 	}
 }
 
+//=================================================================================
+
 // Handling recv()ed messages from the socket
 void receivedDataHandler(struct packet *msgrecvd) {
 
@@ -383,6 +397,8 @@ void receivedDataHandler(struct packet *msgrecvd) {
 
 }
 
+//=================================================================================
+
 // Determing file size, returns -1 on error
 off_t filesize(const char *filename) {
 	struct stat st;
@@ -397,6 +413,8 @@ off_t filesize(const char *filename) {
 	return -1;
 
 }
+
+//=================================================================================
 
 // Send a message to TCR server
 int sendDataToServer(struct packet *packet) {
@@ -423,6 +441,8 @@ int sendDataToServer(struct packet *packet) {
     memset(packet, 0, sizeof(struct packet));	// Empty the struct
 	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
 }
+
+//=================================================================================
 
 // Send a file to the server, returns 0 on success
 int sendFilePackets() {
@@ -492,6 +512,8 @@ int sendFilePackets() {
 	return 0;
 
 }
+
+//=================================================================================
 
 // Creates packet to be sent out, returns -1 on error
 int createPacket(const char *command, struct packet *toSend) {
@@ -570,9 +592,12 @@ int createPacket(const char *command, struct packet *toSend) {
 
 }
 
+//=================================================================================
+
 // Creates message to be sent out, returns -1 on error
 int createMessage(int c_sockfd, const char* command, const char* message) {
 
+	// Create packet
 	Packet * msg = malloc(sizeof(msg));
 
 	if (strcmp(command, CHAT) == 0) {
@@ -600,6 +625,8 @@ int createMessage(int c_sockfd, const char* command, const char* message) {
 	}
 }
 
+//=================================================================================
+
 // Convert strings to all uppercase
 void allCaps(char *command) {
 	while(*command != '\0') {
@@ -607,6 +634,8 @@ void allCaps(char *command) {
 		command++;
 	}
 }
+
+//=================================================================================
 
 // Show client commands
 void help() {
@@ -620,5 +649,7 @@ void help() {
 	printf("\t%-10s terminate and exit the program\n", EXIT);
 	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
 }
+
+//=================================================================================
 
 #endif

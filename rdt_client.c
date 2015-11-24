@@ -13,6 +13,7 @@ int main(int argc, char *argv[]) {
 
 	// Check user arguments supplied
 	if (argc != 4) {
+
 		fprintf(stderr, "Usage: %s [gbn|sr] [corrupt rate] [drop rate]\n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
 		exit(1);
 	}
@@ -20,9 +21,6 @@ int main(int argc, char *argv[]) {
 	else if (strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr") == 0) {
 
     	printf("Protocol: %s\n", argv[1] );
-    	
-    	// Initialize datalink layer
-    	//datalink_init(argv[1]);
     }
     // Unrecognized transfer protocol
     else {
@@ -30,12 +28,7 @@ int main(int argc, char *argv[]) {
     	exit(1);
     }
 
-    // Initialize other layers
-    datalinkInit(argv[1]);
-    physicalInit(argv[1], argv[2], argv[3]);
-
-    // For user command entries
-    char user_command[USERCOMMAND];
+    char user_command[USERCOMMAND];		// For user command entries
 
     // Client main loop waits for input from user
     while (1) {
