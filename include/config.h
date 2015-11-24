@@ -105,4 +105,13 @@ typedef struct Frame {
 	Packet pkt;
 } Frame;
 
+// Structure definition for a temporary buffer space to store Packets received from the client application
+typedef struct BufferEntry {
+    struct BufferEntry * next;
+    Packet pkt;
+} BufferEntry;
+
+BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
+BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
+
 #endif

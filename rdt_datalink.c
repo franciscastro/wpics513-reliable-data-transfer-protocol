@@ -11,8 +11,8 @@ Datalink file
 
 int transferProtocol;       // Current transfer protocol in use
 
-BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
-BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
+//BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
+//BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
 
 pthread_t srThread;             // Thread for Selective-repeat passer to physical layer
 pthread_t srThreadReceiver;     // Thread for Selective-repeat receiver from physical layer

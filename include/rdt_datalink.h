@@ -9,12 +9,6 @@ Header file for datalink definitions
 #ifndef RDT_DATALINK_H_
 #define RDT_DATALINK_H_
 
-// Structure definition for a temporary buffer space to store Packets received from the client application
-typedef struct BufferEntry {
-    struct BufferEntry * next;
-    Packet pkt;
-} BufferEntry;
-
 // Initialize the datalink and its variables
 void datalinkInit(char * protocol);
 
