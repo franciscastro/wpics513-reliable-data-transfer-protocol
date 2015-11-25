@@ -23,17 +23,17 @@ typedef struct ThreadData {
 char* removeSpace(char *s);
 void allCaps(char *command);
 off_t filesize(const char *filename);
+void *get_in_addr(struct sockaddr *sa);
 void parseCommand(char * command);
 void createMessage(const char* command, const char* message);
-void *get_in_addr(struct sockaddr *sa);
-int fetchServerHostname(char *hostname);
-int commandTranslate(char *command);
-int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
-void *receiver(void *param);
-void receivedDataHandler(struct packet *msgrecvd);
-int sendDataToServer(struct packet *packet);
-int sendFilePackets();
-int createPacket(const char *command, struct packet *toSend);
+int sendFilePackets(const char* filename);
+void help();
+
+//int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
+//void *receiver(void *param);
+//void receivedDataHandler(struct packet *msgrecvd);
+//int createPacket(const char *command, struct packet *toSend);
+//int sendDataToServer(struct packet *packet);
 
 
 //=================================================================================
@@ -78,6 +78,20 @@ off_t filesize(const char *filename) {
 	// File size cannot be determined
 	fprintf(stderr, "Cannot determine size of %s: %s\n", filename, strerror(errno));
 	return -1;
+}
+
+//=================================================================================
+
+// Get sockaddr, IPv4 or IPv6
+void *get_in_addr(struct sockaddr *sa) {
+
+	// sockaddr is IPv4
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
+
+	// else, sockaddr is IPv6
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 //=================================================================================
@@ -263,21 +277,6 @@ void help() {
 	printf("\t%-10s send a message to chat partner\n", MESSAGE);
 	printf("\t%-10s terminate and exit the program\n", EXIT);
 	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
-}
-
-//=================================================================================
-
-// Get sockaddr, IPv4 or IPv6
-void *get_in_addr(struct sockaddr *sa) {
-
-	// sockaddr is IPv4
-	if (sa->sa_family == AF_INET) 
-	{
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	}
-
-	// else, sockaddr is IPv6
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 //=================================================================================
@@ -498,7 +497,6 @@ void receivedDataHandler(Packet *msgrecvd) {
 	else if (strcmp((*msgrecvd).command, "NOTIF") == 0) {
 		printf( "%s\n", (*msgrecvd).data );
 	}
-
 }
 
 //=================================================================================
@@ -607,37 +605,6 @@ int sendDataToServer(Packet *packet) {
 
     memset(packet, 0, sizeof(struct packet));	// Empty the struct
 	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
-}
-
-//=================================================================================
-
-// FROM TCR_CLIENT: DON'T USE
-// Get server hostname from file HOSTNAME; Returns 1 on success, 0 on error
-int fetchServerHostname(char *hostname) {
-
-	char hostfile[] = "HOSTNAME";
-
-	// Create file pointer
-	FILE *fp = fopen(hostfile, "rb");
-	
-	// If file does not exist
-	if (fp == NULL) {
-		fprintf(stdout, "File open error. Make sure HOSTNAME file exists.\n\n");
-		return 0;
-	}
-
-	while (!feof(fp)) {
-		fread(hostname, 1, filesize(hostfile), fp);
-	}
-
-	// Manual removal of newline character
-	int len = strlen(hostname);
-	if (len > 0 && hostname[len-1] == '\n') {
-		hostname[len-1] = '\0';
-	}
-
-	fclose(fp);
-	return 1;
 }
 
 //=================================================================================
