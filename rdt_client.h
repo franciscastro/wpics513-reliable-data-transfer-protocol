@@ -32,8 +32,6 @@ void help();
 //int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
 //void *receiver(void *param);
 //void receivedDataHandler(struct packet *msgrecvd);
-//int createPacket(const char *command, struct packet *toSend);
-//int sendDataToServer(struct packet *packet);
 
 
 //=================================================================================
@@ -286,7 +284,7 @@ void help() {
 //			-2 on fail to connect a socket to remote host
 //			-3 on fail to create thread for recv()ing data
 //			 1 on successful connect
-int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p) {
+/*int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p) {
 
 	// [ Load up address structs with getaddrinfo() ]
 	//=================================================================================
@@ -363,7 +361,7 @@ int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error
 
 	//=================================================================================
 
-}
+}*/
 
 //=================================================================================
 
@@ -501,112 +499,5 @@ void receivedDataHandler(Packet *msgrecvd) {
 
 //=================================================================================
 
-// FROM TCR_CLIENT: DON'T USE
-// Creates packet to be sent out, returns -1 on error
-int createPacket(const char *command, struct packet *toSend) {
-
-	struct packet outbound;
-
-	// Default values to avoid garbage data
-	strncpy(outbound.command, command, MAXCOMMANDSIZE);	// Put command type in packet
-	strncpy(outbound.message, "message", MAXMESSAGESIZE);
-	strncpy(outbound.alias, "alias", MAXCOMMANDSIZE);
-	strncpy(outbound.filename, "filename", MAXCOMMANDSIZE);
-	outbound.filebytesize = 0;
-
-	if (strcmp(command,"CONNECT") == 0) {
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command, "CHAT") == 0) {	
-		
-		// For getting alias from user
-		char useralias[MAXCOMMANDSIZE];
-		fprintf(stdout, "Enter alias: ");
-		fgets(useralias, sizeof useralias, stdin);
-
-		// Manual removal of newline character
-		int len = strlen(useralias);
-		if (len > 0 && useralias[len-1] == '\n') { useralias[len-1] = '\0'; }
-
-		// If invalid alias
-		if(useralias == NULL || strcmp(useralias," ") == 0 || strcmp(useralias,"\n") == 0) {
-			fprintf(stderr, "Invalid alias structure.\n");
-			return -1;
-		}
-
-		// Put alias in packet
-		strncpy(outbound.alias, useralias, MAXCOMMANDSIZE);
-
-		// Put alias in global
-		strncpy(alias, useralias, MAXCOMMANDSIZE);
-
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command,"QUIT") == 0) {
-		strncpy(outbound.alias, alias, MAXCOMMANDSIZE);
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command, "FLAG") == 0) {
-		strncpy(outbound.alias, alias, MAXCOMMANDSIZE);
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command, "HELP") == 0) {
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command, "MESSAGE") == 0) {
-
-		fprintf(stdout, "[ You ]: ");
-		fgets(outbound.message, sizeof outbound.message, stdin);
-
-		// Manual removal of newline character
-		int len = strlen(outbound.message);
-		if (len > 0 && outbound.message[len-1] == '\n') { outbound.message[len-1] = '\0'; }
-
-		//fprintf(stdout, "Your message: %s", outbound.message);
-		strncpy(outbound.alias,alias,MAXCOMMANDSIZE);
-		(*toSend) = outbound;
-		return 1;
-	}
-	else if (strcmp(command, "CONFIRM") == 0) {
-		(*toSend) = outbound;
-		return 1;
-	}
-
-}
-
-//=================================================================================
-
-// FROM TCR_CLIENT: DON'T USE
-// Send a message to the server
-int sendDataToServer(Packet *packet) {
-
-	int packetlen = sizeof *packet;
-	int total = 0;				// How many bytes we've sent
-    int bytesleft = packetlen;	// How many we have left to send
-    int n;
-
-    // To make sure all data is sent
-    while ( total < packetlen ) {
-
-        n = send(client_sockfd, (packet + total), bytesleft, 0);
-        
-        if (n == -1) { break; }
-        
-        total += n;
-        bytesleft -= n;
-    }
-
-    packetlen = total;	// Return number actually sent here
-
-    memset(packet, 0, sizeof(struct packet));	// Empty the struct
-	return n == -1 ? -1 : 0;	// Return 0 on success, -1 on failure
-}
-
-//=================================================================================
 
 #endif
