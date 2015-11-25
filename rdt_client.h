@@ -380,10 +380,6 @@ void help() {
 
 // For recv()ing messages from the socket
 void *receiver(void *param) {
-	
-	// Notify user of thread start
-	printf( "Client: receiver() thread started...\n" );
-	printf( "Now waiting for data on [%i]...\n", client_sockfd );
 
 	int recvd;
 

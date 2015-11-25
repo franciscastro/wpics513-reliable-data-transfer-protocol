@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
 		close( client_sockfd );
 		exit(1);
 	}
+	// Notify user of thread start
+	printf( "Client: receiver() thread started...\n" );
 
     char user_command[USERINPUT];		// For user command entries
 
