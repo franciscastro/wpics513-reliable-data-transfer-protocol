@@ -67,10 +67,10 @@ typedef enum {
 	TRANSFER_M,		// Send a file to chat partner
 	HELP_M,			// Show available commands
 	MESSAGE_M,		// Send a message to chat partner
-	MESSAGE_C_M,	// Send a message (complete) to chat partner
 	EXIT_M,			// Terminate and exit the program
 	CONFIRM_M,		// Check with server if you are in chat queue
 	TRANSFER_END_M,	// Flag end of file transfer
+	CONN_LOST_M		// Connection to remote host is lost
 } MessageType;
 
 // Event type
@@ -91,7 +91,7 @@ typedef enum {
 // Application packet
 typedef struct Packet {
 	MessageType msgType;
-	char partnerAlias[ALIASSIZE];
+	char alias[ALIASSIZE];
 	char filename[FILENAMESIZE];
 	char data[MAXDATA];
 } Packet;

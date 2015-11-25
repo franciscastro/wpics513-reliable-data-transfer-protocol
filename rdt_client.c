@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 	// Check selected protocol and initialize datalink layer
-	else if ( strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr" ) == 0) {
+	else if ( strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr" ) == 0 ) {
     	printf( "Protocol: %s\n", argv[1] );
     }
     // Unrecognized transfer protocol
@@ -35,7 +35,14 @@ int main(int argc, char *argv[]) {
     	printf( "Corrupt and drop rates must be >= 0 and <= 100.\n" );
     	exit(1);
     }
-    
+
+    // Start receiver thread
+    ThreadData newthread;
+    if( pthread_create(&newthread.thread_ID, NULL, receiver, (void *)&newthread) ) {
+		fprintf( stderr, "Error creating receiver() thread. Try again.\n" );
+		close( client_sockfd );
+		exit(1);
+	}
 
     char user_command[USERINPUT];		// For user command entries
 

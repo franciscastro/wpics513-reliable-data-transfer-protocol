@@ -20,6 +20,8 @@ typedef struct ThreadData {
 	pthread_t thread_ID;	// This thread's pointer
 } ThreadData;
 
+ThreadData newthread;		// receiver() thread
+
 char* removeSpace(char *s);
 void allCaps(char *command);
 off_t filesize(const char *filename);
@@ -106,15 +108,15 @@ void parseCommand(char * command) {
 	params[1] = command;
 
 	// CONNECT
-	if ( strcmp(params[0], CONNECT) == 0 ) {
-		client_sockfd = connectToServer();
-		//pthread_create(&waitDataThread, NULL, waitData, NULL);
-		if ( client_sockfd == -1 ) {
-			return;
-		}
+	if ( strcmp(params[0], CONNECT ) == 0 ) {
+		//client_sockfd = connectToServer();
+
+		//if ( client_sockfd == -1 ) {
+		//	return;
+		//}
 	} 
 	// CHAT
-	else if ( strcmp(params[0], CHAT) == 0 ) {
+	else if ( strcmp(params[0], CHAT ) == 0 ) {
 		if ( params[1] == NULL ) {
 			printf( "Usage: %s [alias]\n", CHAT );
 			return;
@@ -122,7 +124,7 @@ void parseCommand(char * command) {
 		createMessage( params[0], params[1] );
 	}
 	// QUIT 
-	else if ( strcmp(params[0], QUIT) == 0 ) {
+	else if ( strcmp(params[0], QUIT ) == 0 ) {
 		createMessage( params[0], params[1] );
 	}
 	// TRANSFER
@@ -134,11 +136,11 @@ void parseCommand(char * command) {
 		createMessage( params[0], params[1] );
 	}
 	// HELP
-	else if ( strcmp(params[0], HELP) == 0) {
+	else if ( strcmp(params[0], HELP ) == 0) {
 		help();
 	}
 	// MESSAGE
-	else if ( strcmp(params[0], MESSAGE) == 0 ) {
+	else if ( strcmp(params[0], MESSAGE ) == 0 ) {
 		if ( params[1] == NULL ) {
 			printf( "Usage: %s [message]\n", MESSAGE );
 			return;
@@ -154,7 +156,7 @@ void parseCommand(char * command) {
 		exit(1);
 	}
 	// CONFIRM
-	else if ( strcmp(params[0], CONFIRM) == 0 ) {
+	else if ( strcmp(params[0], CONFIRM ) == 0 ) {
 		createMessage( params[0], params[1] );
 	}
 	// INVALID INPUT
@@ -177,11 +179,11 @@ void createMessage(const char* command, const char* message) {
 
 	if ( strcmp(command, CONNECT) == 0 ) {
 		msg.msgType = CONNECT_M;
-		strncpy( msg.data, message, strlen(message) );
+		//strncpy( msg.data, message, strlen(message) );
 	}
 	else if ( strcmp(command, CHAT) == 0 ) {
 		msg.msgType = CHAT_M;
-		strncpy( msg.data, message, strlen(message) );
+		strncpy( msg.alias, message, strlen(message) );
 	}
 	else if ( strcmp(command, QUIT ) == 0) {
 		(*msg)->msgType = QUIT_M;
@@ -192,6 +194,7 @@ void createMessage(const char* command, const char* message) {
 	}
 	else if ( strcmp(command, MESSAGE) == 0 ) {
 		msg.msgType = CONFIRM_M;
+
 		strncpy( msg.data, message, strlen(message) );
 	}
 	else if ( strcmp(command, CONFIRM) == 0 ) {
@@ -253,7 +256,7 @@ void sendFilePackets(const char* filename) {
 
 	// File end packet
 	Packet msg;
-	strncpy( msg.msgType, TRANSFER_END_M, sizeof(TRANSFER_END_M) );
+	msg.msgType = TRANSFER_END_M;
 	strncpy( msg.filename, filename, strlen(filename) );
 	
 	// Send data to datalink
@@ -368,108 +371,101 @@ void help() {
 // For recv()ing messages from the socket
 void *receiver(void *param) {
 	
+	// Notify user of thread start
+	printf( "Client: receiver() thread started...\n" );
+	printf( "Now waiting for data on [%i]...\n", client_sockfd );
+
 	int recvd;
-	Packet msgrecvd;
 
 	// File variables
-	FILE *fp;
-	int isReceiving = 0;	// 0 - not receiving files, 1 - receiving files
-	char fileRecvName[MAXCOMMANDSIZE];
-	int counter = 0;
+	FILE *fp;						// File pointer
+	boolean isReceiving = false;	// If client is currently receiving a file
+	char *fileRecvName;				// File name of file currently being received
+	int counter = 0;				// Prepend to file name if same name already exists in the current directory
 
-	// Set isconnected flag since client successfully connected to server
-	isconnected = 1;
+	while(1) {
 
-	// Send confirm to server
-	Packet toSend;
-	if(createPacket("CONFIRM", &toSend) == -1) {
-		fprintf(stderr, "Can't create data to send. Try again.\n");
-	}
-	else {
-		int sent = sendDataToServer(&toSend);
-	}
-	memset( &toSend, 0, sizeof(Packet) );	// Empty the struct
-
-	// While connection with server is alive
-	while( isconnected ) {
-
-		// recv() data from the socket
-		recvd = recv(client_sockfd, (void *)&msgrecvd, sizeof(struct packet), 0);
+		// Get packet from datalink layer
+		Packet * pktRecvd = NULL;
+		pktRecvd = datalinkRecv(pktRecvd);
 		
-		if (!recvd) {
-			fprintf(stderr, "Server connection lost. \n");
+		if ( pktRecvd == NULL ) { continue; }
+
+		// Connection to remote host is lost
+		if ( (*pktRecvd).msgType == CONN_LOST_M ) {
+			fprintf( stderr, "Remote host: Connection lost.\n" );
+			printf( "You can try connecting again with %s or quit with %s.\n", CONNECT, EXIT );
 			isconnected = 0;
 			close(client_sockfd);
 			break;
 		}
+		else if ( (*pktRecvd).msgType == CONNECT_M ) {
+			printf( "Connected: %s\n", (*pktRecvd).data );
+			client_sockfd = atoi((*pktRecvd).data);
+		}
+		else if ( (*pktRecvd).msgType == CHAT_M ) {
+			printf( "Now chatting with: %s\n", (*pktRecvd).partnerAlias );
+		}
+		else if ( (*pktRecvd).msgType == QUIT_M ) {
+			printf( "%s\n", (*pktRecvd).data );
+		}
+		else if ( (*pktRecvd).msgType == TRANSFER_M ) {
 
-		if (recvd > 0) {
+			// First file packet received
+			if ( isReceiving == false ) {
 
-			//fprintf(stdout, "COMMAND: %s\nMESSAGE: %s\n", msgrecvd.command, msgrecvd.message);
-			fflush(stdout);
-
-			// Special case: when receiving files
-			if (strcmp(msgrecvd.command, "FILE_SEND") == 0) {
-
-				// First file packet received
-				if (isReceiving == 0) {
-
-					// If file already exists in current directory, prepend a number to filename
-					if (access(msgrecvd.filename, F_OK) != -1) {
-						char prepend[MAXCOMMANDSIZE];
-						sprintf(prepend, "%i", counter);
-						//fprintf(stdout, "in here: %s\n", prepend);
-						strncpy(fileRecvName, prepend, MAXCOMMANDSIZE);
-						strcat(fileRecvName,msgrecvd.filename);
-						counter++;
-					}
-					else {
-						strncpy(fileRecvName, msgrecvd.filename, MAXCOMMANDSIZE);
-					}					
-
-					fprintf(stdout, "Downloading %s...\n", fileRecvName);
-
-					// Open for writing
-					fp = fopen(fileRecvName, "ab");
-					if (fp == NULL) { fprintf(stdout, "File write error. Check your file name.\n"); }
-
-					fwrite(msgrecvd.message, 1, msgrecvd.filebytesize, fp);
-
-					// Change status to currently receiving file data
-					isReceiving = 1;
+				// If file already exists in current directory, prepend a number to filename
+				if ( access((*pktRecvd).filename, F_OK) != -1 ) {
+					char *prepend;
+					sprintf( prepend, "%i", counter );
+					strncpy( fileRecvName, prepend, FILENAMESIZE );
+					strcat( fileRecvName, (*pktRecvd).filename );
+					counter++;
 				}
-				// Rest of the file packets
 				else {
-					//fprintf(stdout, ">>>>> REST OF THE FILE\n");
-					fwrite(msgrecvd.message, 1, msgrecvd.filebytesize, fp);
+					strncpy( fileRecvName, (*pktRecvd).filename, FILENAMESIZE );
 				}
 
-			}
-			// End of file
-			else if (strcmp(msgrecvd.command, "FILE_END") == 0) {
-				//fprintf(stdout, ">>>>> FCLOSE PART\n");
-				fclose(fp);
-				isReceiving = 0;
-				fprintf(stdout, "%s saved.\n", fileRecvName);
-			}
-			// Other cases
-			else {
-				//fprintf(stdout, ">>>>> OTHER CASES\n");
-				receivedDataHandler(&msgrecvd);
-			}
+				// Notify user that file is being downloaded
+				printf( "Downloading %s...\n", fileRecvName );
 
-			//fprintf(stdout, "%s\n", msgrecvd.message);
+				// Open for writing
+				fp = fopen( fileRecvName, "ab" );
+				if ( fp == NULL ) { fprintf(stderr, "File write error. Check your file name.\n"); }
+
+				fwrite( (*pktRecvd).message, 1, sizeof((*pktRecvd).message), fp );
+
+				// Change status to currently receiving file data
+				isReceiving = true;
+			}
+			// Rest of the file packets
+			else {
+				fwrite( (*pktRecvd).message, 1, sizeof((*pktRecvd).message), fp);
+			}			
+		}
+		else if ( (*pktRecvd).msgType == TRANSFER_END_M ) {
+			fclose(fp);
+			isReceiving = false;
+			printf( "%s saved.\n", fileRecvName );
+			memset( &fileRecvName, 0, sizeof(fileRecvName) );	// Empty the string
+		}
+		else if ( (*pktRecvd).msgType == MESSAGE_M ) {
+			printf( "[ %s ]: %s\n", (*pktRecvd).alias, (*pktRecvd).data );
+		}
+		else if ( (*pktRecvd).msgType == CONFIRM_M ) {
+			printf( "%s\n", (*pktRecvd).data );
 		}
 
-		memset( &msgrecvd, 0, sizeof(Packet) );		// Empty the struct
+		memset( &pktRecvd, 0, sizeof(Packet) );		// Empty the struct
 	}
+
+	printf( "Client: receiver() thread terminated.\n" );
 }
 
 //=================================================================================
 
 // Handling recv()ed messages from the socket
-void receivedDataHandler(Packet *msgrecvd) {
-
+/*
 	if (strcmp((*msgrecvd).command, "ACKN") == 0) {
 		//fprintf(stdout, "You are added in the chat queue\n");
 		printf( "%s\n", (*msgrecvd).data );
@@ -487,7 +483,7 @@ void receivedDataHandler(Packet *msgrecvd) {
 		printf( "%s\n", (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "MESSAGE") == 0) {
-		printf( "[ %s ]: %s\n", (*msgrecvd).partnerAlias, (*msgrecvd).data );
+		printf( "[ %s ]: %s\n", (*msgrecvd).alias, (*msgrecvd).data );
 	}
 	else if (strcmp((*msgrecvd).command, "CHAT_ACK") == 0) {
 		printf( "Now chatting with %s\n", (*msgrecvd).partnerAlias );
@@ -495,7 +491,7 @@ void receivedDataHandler(Packet *msgrecvd) {
 	else if (strcmp((*msgrecvd).command, "NOTIF") == 0) {
 		printf( "%s\n", (*msgrecvd).data );
 	}
-}
+}*/
 
 //=================================================================================
 
