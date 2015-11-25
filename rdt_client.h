@@ -186,7 +186,7 @@ void createMessage(const char* command, const char* message) {
 		strncpy( msg.alias, message, strlen(message) );
 	}
 	else if ( strcmp(command, QUIT ) == 0) {
-		(*msg).msgType = QUIT_M;
+		msg.msgType = QUIT_M;
 	}
 	else if ( strcmp(command, TRANSFER ) == 0) {
 		sendFilePackets(message);
@@ -387,7 +387,7 @@ void *receiver(void *param) {
 
 		// Get packet from datalink layer
 		Packet * pktRecvd = NULL;
-		pktRecvd = datalinkRecv(pktRecvd);
+		pktRecvd = NULL;//datalinkRecv(pktRecvd);
 		
 		if ( pktRecvd == NULL ) { continue; }
 
