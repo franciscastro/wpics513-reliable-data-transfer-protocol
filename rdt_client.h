@@ -28,7 +28,7 @@ off_t filesize(const char *filename);
 void *get_in_addr(struct sockaddr *sa);
 void parseCommand(char * command);
 void createMessage(const char* command, const char* message);
-int sendFilePackets(const char* filename);
+void sendFilePackets(const char* filename);
 void help();
 
 //int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
@@ -150,7 +150,7 @@ void parseCommand(char * command) {
 	// EXIT
 	else if ( strcmp(params[0], EXIT ) == 0) {
 		printf( "Closing the chat client...\n" );
-		isConnected = 0;
+		isconnected = 0;
 		close( client_sockfd );
 		printf( "Active sockets closed.\n" );
 		exit(1);
@@ -186,7 +186,7 @@ void createMessage(const char* command, const char* message) {
 		strncpy( msg.alias, message, strlen(message) );
 	}
 	else if ( strcmp(command, QUIT ) == 0) {
-		(*msg)->msgType = QUIT_M;
+		(*msg).msgType = QUIT_M;
 	}
 	else if ( strcmp(command, TRANSFER ) == 0) {
 		sendFilePackets(message);
@@ -404,7 +404,7 @@ void *receiver(void *param) {
 			client_sockfd = atoi((*pktRecvd).data);
 		}
 		else if ( (*pktRecvd).msgType == CHAT_M ) {
-			printf( "Now chatting with: %s\n", (*pktRecvd).partnerAlias );
+			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
 		}
 		else if ( (*pktRecvd).msgType == QUIT_M ) {
 			printf( "%s\n", (*pktRecvd).data );
@@ -433,14 +433,14 @@ void *receiver(void *param) {
 				fp = fopen( fileRecvName, "ab" );
 				if ( fp == NULL ) { fprintf(stderr, "File write error. Check your file name.\n"); }
 
-				fwrite( (*pktRecvd).message, 1, sizeof((*pktRecvd).message), fp );
+				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp );
 
 				// Change status to currently receiving file data
 				isReceiving = true;
 			}
 			// Rest of the file packets
 			else {
-				fwrite( (*pktRecvd).message, 1, sizeof((*pktRecvd).message), fp);
+				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp);
 			}			
 		}
 		else if ( (*pktRecvd).msgType == TRANSFER_END_M ) {
