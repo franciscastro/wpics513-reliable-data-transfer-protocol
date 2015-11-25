@@ -413,7 +413,7 @@ void *receiver(void *param) {
 		}
 		else if ( (*pktRecvd).msgType == CONNECT_M ) {
 			printf( "Connected: socket %i\n", (*pktRecvd).sockfd );
-			client_sockfd = atoi((*pktRecvd).sockfd);
+			client_sockfd = (*pktRecvd).sockfd;
 		}
 		else if ( (*pktRecvd).msgType == CHAT_M ) {
 			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
