@@ -160,7 +160,7 @@ void parseCommand(char * command) {
 		createMessage( params[0], params[1] );
 	}
 	// EXIT
-	else if ( strcmp(params[0], EXIT ) == 0) {
+	else if ( strcmp(params[0], EXIT ) == 0 ) {
 		printf( "Closing the chat client...\n" );
 		isconnected = 0;
 		close( client_sockfd );
@@ -205,13 +205,11 @@ void createMessage(const char* command, const char* message) {
 		return;
 	}
 	else if ( strcmp(command, MESSAGE) == 0 ) {
-		msg.msgType = CONFIRM_M;
-
+		msg.msgType = MESSAGE_M;
 		strncpy( msg.data, message, strlen(message) );
 	}
 	else if ( strcmp(command, CONFIRM) == 0 ) {
 		msg.msgType = CONFIRM_M;
-		strncpy( msg.data, message, strlen(message) );
 	}
 
 	datalinkSend( client_sockfd, msg );
