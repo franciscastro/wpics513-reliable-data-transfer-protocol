@@ -31,6 +31,18 @@ void createMessage(const char* command, const char* message);
 void sendFilePackets(const char* filename);
 void help();
 
+// TEMPORARY FOR TESTING
+Packet *datalinkRecv();
+void datalinkSend(int sfd, Packet p);
+
+Packet *datalinkRecv() {
+	return NULL;
+}
+
+void datalinkSend(int sfd, Packet p) {
+	return;
+}
+
 //int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
 //void *receiver(void *param);
 //void receivedDataHandler(struct packet *msgrecvd);
@@ -387,7 +399,7 @@ void *receiver(void *param) {
 
 		// Get packet from datalink layer
 		Packet * pktRecvd = NULL;
-		pktRecvd = NULL;//datalinkRecv(pktRecvd);
+		pktRecvd = datalinkRecv(pktRecvd);
 		
 		if ( pktRecvd == NULL ) { continue; }
 
@@ -400,8 +412,8 @@ void *receiver(void *param) {
 			break;
 		}
 		else if ( (*pktRecvd).msgType == CONNECT_M ) {
-			printf( "Connected: %s\n", (*pktRecvd).data );
-			client_sockfd = atoi((*pktRecvd).data);
+			printf( "Connected: socket %i\n", (*pktRecvd).sockfd );
+			client_sockfd = atoi((*pktRecvd).sockfd);
 		}
 		else if ( (*pktRecvd).msgType == CHAT_M ) {
 			printf( "Now chatting with: %s\n", (*pktRecvd).alias );

@@ -91,6 +91,7 @@ typedef enum {
 // Application packet
 typedef struct Packet {
 	MessageType msgType;
+	int sockfd;
 	char alias[ALIASSIZE];
 	char filename[FILENAMESIZE];
 	char data[MAXDATA];
@@ -101,7 +102,6 @@ typedef struct Frame {
 	int checksum;
 	int seqNumber;
 	int nextAckExpected;
-	int sockfd;
 	FrameType type;
 	Packet pkt;
 } Frame;
