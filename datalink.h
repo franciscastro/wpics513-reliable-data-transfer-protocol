@@ -7,6 +7,11 @@ Datalink layer commands file.
 */
 #include "config.h"
 
+Frame make_fram(bool isServer, Packet data) {
+	Frame f;
+	return f;
+}
+
 /*
 	called from above (application layer)
 	-converts app data to datalink data (packet - > frame)
@@ -43,3 +48,7 @@ void rdt_recv(int sockfd, Frame data) {
 void deliver_data(Packet data) {
 	int sockfd = data.pkt.sockfd;
 } 
+
+bool corrupt_pkt(Packet data) {
+	return false;
+}
