@@ -1,7 +1,7 @@
 /*
 Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
-Last modified: 23 Oct 2015
+Last modified: 28 Nov 2015
 
 Client header file.
 */
@@ -11,16 +11,16 @@ Client header file.
 
 #include "config.h"
 
-int client_sockfd;		// Socket file descriptor for communicating to remote host
-int isconnected = 0;	// 1 if already connected to server, 0, -1, -2, otherwise (see connectToHost())
+int client_sockfd;				// Socket file descriptor for communicating to remote host
+boolean isconnected = false;	// Flag to denote this client's connection state
 
-char alias[ALIASSIZE];		// This client's alias
+char alias[ALIASSIZE];			// This client's alias
 
 typedef struct ThreadData {
-	pthread_t thread_ID;	// This thread's pointer
+	pthread_t thread_ID;		// This thread's pointer
 } ThreadData;
 
-ThreadData newthread;		// receiver() thread
+ThreadData newthread;			// receiver() thread
 
 char* removeSpace(char *s);
 void allCaps(char *command);
@@ -30,6 +30,7 @@ void parseCommand(char * command);
 void createMessage(const char* command, const char* message);
 void sendFilePackets(const char* filename);
 void help();
+void *receiver(void *param);
 
 // TEMPORARY FOR TESTING
 Packet *datalinkRecv();
@@ -42,11 +43,6 @@ Packet *datalinkRecv() {
 void datalinkSend(int sfd, Packet p) {
 	return;
 }
-
-//int connectToHost(struct addrinfo *hints, struct addrinfo **servinfo, int *error_status, char *hostname, struct addrinfo **p);
-//void *receiver(void *param);
-//void receivedDataHandler(struct packet *msgrecvd);
-
 
 //=================================================================================
 
@@ -78,7 +74,7 @@ void allCaps(char *command) {
 
 //=================================================================================
 
-// Determing file size, returns -1 on error
+// Determining file size, returns -1 on error
 off_t filesize(const char *filename) {
 	struct stat st;
 
@@ -121,11 +117,7 @@ void parseCommand(char * command) {
 
 	// CONNECT
 	if ( strcmp(params[0], CONNECT ) == 0 ) {
-		//client_sockfd = connectToServer();
-
-		//if ( client_sockfd == -1 ) {
-		//	return;
-		//}
+		createMessage( params[0], params[1] );
 	} 
 	// CHAT
 	else if ( strcmp(params[0], CHAT ) == 0 ) {
@@ -162,7 +154,7 @@ void parseCommand(char * command) {
 	// EXIT
 	else if ( strcmp(params[0], EXIT ) == 0 ) {
 		printf( "Closing the chat client...\n" );
-		isconnected = 0;
+		isconnected = false;
 		close( client_sockfd );
 		printf( "Active sockets closed.\n" );
 		exit(1);
@@ -196,9 +188,11 @@ void createMessage(const char* command, const char* message) {
 	else if ( strcmp(command, CHAT) == 0 ) {
 		msg.msgType = CHAT_M;
 		strncpy( msg.alias, message, strlen(message) );
+		strncpy( alias, message, strlen(message) );		// Set this client's global alias
 	}
 	else if ( strcmp(command, QUIT ) == 0) {
 		msg.msgType = QUIT_M;
+		memset( alias, 0, sizeof(alias) );	// Null this client's global alias
 	}
 	else if ( strcmp(command, TRANSFER ) == 0) {
 		sendFilePackets(message);
@@ -262,6 +256,7 @@ void sendFilePackets(const char* filename) {
 		memset( &msg, 0, sizeof(Packet) );	// Empty the struct
 	}
 
+	// Close the file pointer
 	fclose(fp);
 
 	// File end packet
@@ -288,6 +283,98 @@ void help() {
 	printf("\t%-10s send a message to chat partner\n", MESSAGE);
 	printf("\t%-10s terminate and exit the program\n", EXIT);
 	printf("\t%-10s check with the server if you are in a chat queue\n", CONFIRM);
+}
+
+//=================================================================================
+
+// For recv()ing messages from the socket
+void *receiver(void *param) {
+
+	// File variables
+	FILE *fp;						// File pointer
+	boolean isReceiving = false;	// Flag if client is currently receiving a file
+	char *fileRecvName;				// File name of file currently being received
+	int counter = 0;				// Prepend to file name if same name already exists in the current directory
+
+	while(1) {
+
+		// Get packet from datalink layer
+		Packet * pktRecvd = NULL;
+		pktRecvd = datalinkRecv(pktRecvd);
+		
+		if ( pktRecvd == NULL ) { continue; }
+
+		// Connection to remote host is lost
+		if ( (*pktRecvd).msgType == CONN_LOST_M ) {
+			fprintf( stderr, "Remote host: Connection lost.\n" );
+			printf( "You can try connecting again with %s or quit with %s.\n", CONNECT, EXIT );
+			isconnected = false;
+			close(client_sockfd);
+			break;
+		}
+		else if ( (*pktRecvd).msgType == CONNECT_M ) {
+			printf( "Connected: socket %i\n", (*pktRecvd).sockfd );
+			client_sockfd = (*pktRecvd).sockfd;
+			isconnected = true;
+		}
+		else if ( (*pktRecvd).msgType == CHAT_M ) {
+			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
+		}
+		else if ( (*pktRecvd).msgType == QUIT_M ) {
+			printf( "%s\n", (*pktRecvd).data );
+		}
+		else if ( (*pktRecvd).msgType == TRANSFER_M ) {
+
+			// First file packet received
+			if ( isReceiving == false ) {
+
+				// If file already exists in current directory, prepend a number to filename
+				if ( access((*pktRecvd).filename, F_OK) != -1 ) {
+					char *prepend;
+					sprintf( prepend, "%i", counter );
+					strncpy( fileRecvName, prepend, FILENAMESIZE );
+					strcat( fileRecvName, (*pktRecvd).filename );
+					counter++;
+					memset( &prepend, 0, sizeof(prepend) );		// Empty the string
+				}
+				else {
+					strncpy( fileRecvName, (*pktRecvd).filename, FILENAMESIZE );
+				}
+
+				// Notify user that file is being downloaded
+				printf( "Downloading %s...\n", fileRecvName );
+
+				// Open file for writing
+				fp = fopen( fileRecvName, "ab" );
+				if ( fp == NULL ) { fprintf(stderr, "File write error. Check your file name.\n"); }
+
+				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp );
+
+				// Change status to currently receiving file data
+				isReceiving = true;
+			}
+			// Rest of the file packets
+			else {
+				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp);
+			}			
+		}
+		else if ( (*pktRecvd).msgType == TRANSFER_END_M ) {
+			fclose(fp);
+			isReceiving = false;
+			printf( "%s saved.\n", fileRecvName );
+			memset( &fileRecvName, 0, sizeof(fileRecvName) );	// Empty the string
+		}
+		else if ( (*pktRecvd).msgType == MESSAGE_M ) {
+			printf( "[ %s ]: %s\n", (*pktRecvd).alias, (*pktRecvd).data );
+		}
+		else if ( (*pktRecvd).msgType == CONFIRM_M ) {
+			printf( "%s\n", (*pktRecvd).data );
+		}
+
+		memset( &pktRecvd, 0, sizeof(Packet) );		// Empty the struct
+	}
+
+	printf( "Client: receiver() thread terminated.\n" );
 }
 
 //=================================================================================
@@ -374,129 +461,6 @@ void help() {
 
 	//=================================================================================
 
-}*/
-
-//=================================================================================
-
-// For recv()ing messages from the socket
-void *receiver(void *param) {
-
-	int recvd;
-
-	// File variables
-	FILE *fp;						// File pointer
-	boolean isReceiving = false;	// If client is currently receiving a file
-	char *fileRecvName;				// File name of file currently being received
-	int counter = 0;				// Prepend to file name if same name already exists in the current directory
-
-	while(1) {
-
-		// Get packet from datalink layer
-		Packet * pktRecvd = NULL;
-		pktRecvd = datalinkRecv(pktRecvd);
-		
-		if ( pktRecvd == NULL ) { continue; }
-
-		// Connection to remote host is lost
-		if ( (*pktRecvd).msgType == CONN_LOST_M ) {
-			fprintf( stderr, "Remote host: Connection lost.\n" );
-			printf( "You can try connecting again with %s or quit with %s.\n", CONNECT, EXIT );
-			isconnected = 0;
-			close(client_sockfd);
-			break;
-		}
-		else if ( (*pktRecvd).msgType == CONNECT_M ) {
-			printf( "Connected: socket %i\n", (*pktRecvd).sockfd );
-			client_sockfd = (*pktRecvd).sockfd;
-		}
-		else if ( (*pktRecvd).msgType == CHAT_M ) {
-			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
-		}
-		else if ( (*pktRecvd).msgType == QUIT_M ) {
-			printf( "%s\n", (*pktRecvd).data );
-		}
-		else if ( (*pktRecvd).msgType == TRANSFER_M ) {
-
-			// First file packet received
-			if ( isReceiving == false ) {
-
-				// If file already exists in current directory, prepend a number to filename
-				if ( access((*pktRecvd).filename, F_OK) != -1 ) {
-					char *prepend;
-					sprintf( prepend, "%i", counter );
-					strncpy( fileRecvName, prepend, FILENAMESIZE );
-					strcat( fileRecvName, (*pktRecvd).filename );
-					counter++;
-				}
-				else {
-					strncpy( fileRecvName, (*pktRecvd).filename, FILENAMESIZE );
-				}
-
-				// Notify user that file is being downloaded
-				printf( "Downloading %s...\n", fileRecvName );
-
-				// Open for writing
-				fp = fopen( fileRecvName, "ab" );
-				if ( fp == NULL ) { fprintf(stderr, "File write error. Check your file name.\n"); }
-
-				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp );
-
-				// Change status to currently receiving file data
-				isReceiving = true;
-			}
-			// Rest of the file packets
-			else {
-				fwrite( (*pktRecvd).data, 1, sizeof((*pktRecvd).data), fp);
-			}			
-		}
-		else if ( (*pktRecvd).msgType == TRANSFER_END_M ) {
-			fclose(fp);
-			isReceiving = false;
-			printf( "%s saved.\n", fileRecvName );
-			memset( &fileRecvName, 0, sizeof(fileRecvName) );	// Empty the string
-		}
-		else if ( (*pktRecvd).msgType == MESSAGE_M ) {
-			printf( "[ %s ]: %s\n", (*pktRecvd).alias, (*pktRecvd).data );
-		}
-		else if ( (*pktRecvd).msgType == CONFIRM_M ) {
-			printf( "%s\n", (*pktRecvd).data );
-		}
-
-		memset( &pktRecvd, 0, sizeof(Packet) );		// Empty the struct
-	}
-
-	printf( "Client: receiver() thread terminated.\n" );
-}
-
-//=================================================================================
-
-// Handling recv()ed messages from the socket
-/*
-	if (strcmp((*msgrecvd).command, "ACKN") == 0) {
-		//fprintf(stdout, "You are added in the chat queue\n");
-		printf( "%s\n", (*msgrecvd).data );
-	}
-	else if (strcmp((*msgrecvd).command, "IN SESSION") == 0) {
-		// fprintf(stdout, "Now on a channel with: %s\n", (*msgrecvd).message);
-		printf( "%s\n", (*msgrecvd).data );
-	}
-	else if (strcmp((*msgrecvd).command, "QUIT") == 0) {
-		//fprintf(stdout, "You have quit the channel \n");
-		printf( "%s\n", (*msgrecvd).data );
-	}
-	else if (strcmp((*msgrecvd).command, "HELP") == 0) {
-		//fprintf(stdout, "Commands available:\n %s\n", (*msgrecvd).message );
-		printf( "%s\n", (*msgrecvd).data );
-	}
-	else if (strcmp((*msgrecvd).command, "MESSAGE") == 0) {
-		printf( "[ %s ]: %s\n", (*msgrecvd).alias, (*msgrecvd).data );
-	}
-	else if (strcmp((*msgrecvd).command, "CHAT_ACK") == 0) {
-		printf( "Now chatting with %s\n", (*msgrecvd).partnerAlias );
-	}
-	else if (strcmp((*msgrecvd).command, "NOTIF") == 0) {
-		printf( "%s\n", (*msgrecvd).data );
-	}
 }*/
 
 //=================================================================================
