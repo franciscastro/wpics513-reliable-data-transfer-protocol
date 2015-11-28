@@ -1,7 +1,7 @@
 /*
 Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
-Last modified: 14 Nov 2015
+Last modified: 28 Nov 2015
 
 Header file for shared definitions
 */
@@ -46,7 +46,7 @@ Header file for shared definitions
 #define MESSAGE		"-message"		// Send a message to chat partner
 #define EXIT		"-exit"			// Terminate and exit the program
 #define CONFIRM		"-confirm"		// Check with server if you are in chat queue
-#define MAXDATASIZE 	1000 	// Max number of bytes we can get at once
+
 #define FILENAMESIZE	30		// Max size of filenames
 #define MAXCOMMANDSIZE	30		// Max size of commands
 #define ALIASSIZE		30		// Max size of client alias
@@ -73,14 +73,15 @@ typedef enum {
 	CONN_LOST_M		// Connection to remote host is lost
 } MessageType;
 
+// IGNORE: USED IN FRANCIS' TRANSFER PROTOCOL IMPLEMENTATION
 // Event type
-typedef enum {
+/*typedef enum {
 	FRAME_ARRIVAL, 
 	CKSUM_ERR, 
 	TIMEOUT, 
 	UPPER_LAYER_READY,
 	ACK_TIMEOUT
-} EventType;
+} EventType;*/
 
 // Frame type
 typedef enum {

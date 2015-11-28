@@ -1,7 +1,7 @@
 /*
 Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
-Last modified: 23 Oct 2015
+Last modified: 28 Nov 2015
 
 Client header file.
 */
