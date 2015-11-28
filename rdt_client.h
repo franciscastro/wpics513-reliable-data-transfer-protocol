@@ -74,7 +74,7 @@ void allCaps(char *command) {
 
 //=================================================================================
 
-// Determing file size, returns -1 on error
+// Determining file size, returns -1 on error
 off_t filesize(const char *filename) {
 	struct stat st;
 
@@ -256,6 +256,7 @@ void sendFilePackets(const char* filename) {
 		memset( &msg, 0, sizeof(Packet) );	// Empty the struct
 	}
 
+	// Close the file pointer
 	fclose(fp);
 
 	// File end packet
