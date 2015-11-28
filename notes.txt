@@ -1,0 +1,76 @@
+//=================================================================================
+
+
+void parseCommand(char * command)
+
+- Description:
+	Parses command into 2 strings: the command and the argument, then matches to the appropriate command mechanism (see: if-else part of the function)
+
+- Locals:
+	1. char *command	:	function parameter; the command string passed to this function from user input in main()
+	2. char *delimiter	:	delimiter character for splitting command
+	3. char *token		:	temporary vars when command is split
+	4. char *params		:	params[0] contains the actual command, params
+
+- Globals used:
+	1. client_sockfd	:	the socket descriptor of this client
+
+
+//=================================================================================
+
+
+void createMessage(const char* command, const char* message)
+
+- Description:
+	Called from parseCommand() to create the appropriate Packet to be sent to the datalink layer (see: if-else part of the function)
+
+- Locals:
+	1. char * command	:	function parameter; the command to match to (see if-else part of function)
+	2. char * message 	:	function parameter; the message that goes with command 
+							(e.g. -chat francis :: -chat is the command, francis is the message; these are parsed in parseCommand())
+	3. Packet msg		:	temporary Packet variable to store appropriate Packet information
+
+- Globals used:
+	1. client_sockfd	:	the socket descriptor of this client
+	2. alias			:	this alias of this client
+
+
+//=================================================================================
+
+
+void sendFilePackets(const char* filename)
+
+- Description:
+	Called from createMessage() to split a file into 100-byte sized chunks, encapsulate each chunk in a Packet, and then send all of the Packets. Additionally sends a Packet with MessageType TRANSFER_END_M to denote that all file Packets have been sent.
+
+- Locals:
+	1. char * filename	:	function parameter; the file to open in the current directory
+	2. FILE * fp 		:	the file pointer used to access a file to be opened and sent
+	3. Packet msg		:	temporary Packet variable to store appropriate Packet information
+
+- Globals used:
+	1. client_sockfd	:	the socket descriptor of this client
+	
+
+//=================================================================================
+
+
+void *receiver(void *param)
+
+- Description:
+	The thread function that waits for incoming data from the datalink layer; started from main()
+
+- Locals:
+	1. void * param 		:	function parameter; the thread variable for this thread
+	2. FILE * fp 			:	the file pointer used to access a file to write to
+	3. boolean isReceiving	:	flag variable to denote if the client is currently receiving files
+	4. char * fileRecvName	:	the file name of the current file being received
+	5. int counter			:	prepended to a file name should there be a duplicate file in the current directory; incremented as needed
+
+- Globals used:
+	1. client_sockfd		:	the socket descriptor of this client
+	2. isconnected			:	flag to note if this client is connected to a server
+
+
+
+//=================================================================================
