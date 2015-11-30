@@ -32,6 +32,7 @@ Header file for shared definitions
 
 // [ TRANSFER PROTOCOL ]
 #define WINDOWSIZE 	5		// Window size for transfer protocol
+#define TIMEOUT 0.5
 
 // [ DATALINK LAYER ]
 #define GOBACKN		1	// Go-back-N transfer protocol
@@ -70,18 +71,21 @@ typedef enum {
 	EXIT_M,			// Terminate and exit the program
 	CONFIRM_M,		// Check with server if you are in chat queue
 	TRANSFER_END_M,	// Flag end of file transfer
-	CONN_LOST_M		// Connection to remote host is lost
+	CONN_LOST_M	,	// Connection to remote host is lost
+	IN_SESSION_M,	// Currently chatting
+	ACK_M			// ACK for datalink layer to process as ack
 } MessageType;
 
+// IGNORE: USED IN FRANCIS' TRANSFER PROTOCOL IMPLEMENTATION
 // Event type
-typedef enum {
+/*typedef enum {
 	FRAME_ARRIVAL, 
 	CKSUM_ERR, 
 	TIMEOUT, 
 	UPPER_LAYER_READY,
 	ACK_TIMEOUT
-} EventType;
-
+} EventType;*/
+	
 // Frame type
 typedef enum {
 	DATA_F, 
@@ -99,7 +103,7 @@ typedef struct Packet {
 
 // Datalink frame
 typedef struct Frame {
-	int checksum;
+	unsigned char checksum[8];
 	int seqNumber;
 	int nextAckExpected;
 	FrameType type;
@@ -114,5 +118,18 @@ typedef struct BufferEntry {
 
 BufferEntry * fromClient;   // Pointer to outgoing buffer for storing packets from client
 BufferEntry * forClient;    // Pointer to incoming buffer for storing packets received from physical layer
+
+BufferEntry * fromServer1;   // Pointer to outgoing buffer for storing packets from client
+BufferEntry * forServer1;    // Pointer to incoming buffer for storing packets received from physical layer
+
+BufferEntry * fromServer2;   // Pointer to outgoing buffer for storing packets from client
+BufferEntry * forServer2;    // Pointer to incoming buffer for storing packets received from physical layer
+
+typedef struct FrameBufferEntry {
+	struct FrameBufferEntry * next;
+	struct FrameBufferEntry * prev;
+	Frame frame;
+	int count;
+} FrameBufferEntry;
 
 #endif

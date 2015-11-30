@@ -285,7 +285,6 @@ int main() {
 
 	FD_ZERO(&master);
     FD_ZERO(&read_fds);
-	
 
 	memset(&hints, 0, sizeof hints);	// make sure the struct is empty
 	hints.ai_family = AF_UNSPEC;		// don't care if IPv4 (AF_INET) or IPv6 (AF_INET6)

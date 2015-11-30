@@ -1,7 +1,7 @@
 /*
 Authors: Francisco Castro, Antonio Umali
 CS 513 Project 2 - Reliable Data Transfer Protocol
-Last modified: 23 Oct 2015
+Last modified: 28 Nov 2015
 
 Client file.
 */
@@ -15,6 +15,9 @@ int main(int argc, char *argv[]) {
 	int corruptRate = atoi(argv[2]);
 	int dropRate = atoi(argv[3]);
 
+	// set protocol default(none)
+	is_gbn = -1;
+
 	// Check user arguments supplied
 	if ( argc != 4 ) {
 		fprintf(stderr, "Usage: %s [gbn|sr] [corrupt rate] [drop rate]\n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
@@ -23,6 +26,12 @@ int main(int argc, char *argv[]) {
 	// Check selected protocol and initialize datalink layer
 	else if ( strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr" ) == 0 ) {
     	printf( "Protocol: %s\n", argv[1] );
+    	if (strcmp(argv[1], "gbn") == 0) { //gbn selected
+    		is_gbn = 1;
+    	}
+    	else { //selective repeat 
+    		is_gbn = 0;
+    	}
     }
     // Unrecognized transfer protocol
     else {
@@ -37,14 +46,14 @@ int main(int argc, char *argv[]) {
     }
 
     // Start receiver thread
-    ThreadData newthread;
-    if( pthread_create(&newthread.thread_ID, NULL, receiver, (void *)&newthread) ) {
-		fprintf( stderr, "Error creating receiver() thread. Try again.\n" );
-		close( client_sockfd );
-		exit(1);
-	}
-	// Notify user of thread start
-	printf( "Client: receiver() thread started...\n" );
+ //    ThreadData newthread;
+ //    if( pthread_create(&newthread.thread_ID, NULL, receiver, (void *)&newthread) ) {
+	// 	fprintf( stderr, "Error creating receiver() thread. Try again.\n" );
+	// 	close( client_sockfd );
+	// 	exit(1);
+	// }
+	// // Notify user of thread start
+	// printf( "Client: receiver() thread started...\n" );
 
     char user_command[USERINPUT];		// For user command entries
 
