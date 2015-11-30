@@ -140,9 +140,9 @@ void parseCommand(char * command) {
 		createMessage( params[0], params[1] );
 	}
 	// QUIT 
-	else if ( strcmp(params[0], QUIT ) == 0 ) {
+	/*else if ( strcmp(params[0], QUIT ) == 0 ) {
 		createMessage( params[0], params[1] );
-	}
+	}*/
 	// TRANSFER
 	else if ( strcmp(params[0], TRANSFER ) == 0) {
 		if ( params[1] == NULL ) {
@@ -214,10 +214,10 @@ void createMessage(const char* command, const char* message) {
 			push_pkt_snd_buffer(0, client_sockfd, pbe);
 		}
 	}
-	else if ( strcmp(command, QUIT ) == 0) {
+	/*else if ( strcmp(command, QUIT ) == 0) {
 		msg.msgType = QUIT_M;
 		memset( alias, 0, sizeof(alias) );	// Null this client's global alias
-	}
+	}*/
 	else if ( strcmp(command, TRANSFER ) == 0) {
 		sendFilePackets(message);
 		return;
@@ -300,8 +300,8 @@ void sendFilePackets(const char* filename) {
 void help() {
 	printf("Client commands:\n");
 	printf("\t%-10s connect to the server\n", CONNECT);
-	printf("\t%-10s request for a chat partner\n", CHAT);
-	printf("\t%-10s quit the current chat channel\n", QUIT);
+	printf("\t%-10s request for to chat with server\n", CHAT);
+	//printf("\t%-10s quit the current chat channel\n", QUIT);
 	printf("\t%-10s send a file to chat partner\n", TRANSFER);
 	printf("\t%-10s print this help information\n", HELP);
 	printf("\t%-10s send a message to chat partner\n", MESSAGE);
@@ -368,7 +368,7 @@ void *receiver(void *param) {
 		// Connection to remote host is lost
 		if ( (*pktRecvd).msgType == CONN_LOST_M ) {
 			fprintf( stderr, "Remote host: Connection lost.\n" );
-			printf( "You can try connecting again with %s or quit with %s.\n", CONNECT, EXIT );
+			printf( "You can try connecting again with %s or exit with %s.\n", CONNECT, EXIT );
 			isconnected = false;
 			close(client_sockfd);
 			break;
@@ -381,9 +381,12 @@ void *receiver(void *param) {
 		else if ( (*pktRecvd).msgType == CHAT_M ) {
 			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
 		}
-		else if ( (*pktRecvd).msgType == QUIT_M ) {
+		/*else if ( (*pktRecvd).msgType == QUIT_M ) {
 			printf( "%s\n", (*pktRecvd).data );
-		}
+			printf( "You can try connecting again with %s or exit with %s.\n", CONNECT, EXIT );
+			isconnected = false;
+			close(client_sockfd);
+		}*/
 		else if ( (*pktRecvd).msgType == TRANSFER_M ) {
 
 			// First file packet received
@@ -429,7 +432,7 @@ void *receiver(void *param) {
 			printf( "[ %s ]: %s\n", (*pktRecvd).alias, (*pktRecvd).data );
 		}
 		else if ( (*pktRecvd).msgType == CONFIRM_M ) {
-			printf( "%s\n", (*pktRecvd).data );
+			printf( "Now chatting with: %s\n", (*pktRecvd).alias );
 		}
 
 		memset( &pktRecvd, 0, sizeof(Packet) );		// Empty the struct

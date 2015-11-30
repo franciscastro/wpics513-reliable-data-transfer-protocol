@@ -160,7 +160,38 @@ void *io_handler(void *param, int socket_fd) {
 	return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+
+	// Check user arguments supplied
+	if ( argc != 4 ) {
+		fprintf(stderr, "Usage: %s [gbn|sr] [corrupt rate] [drop rate]\n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		exit(1);
+	}
+	// Check selected protocol and initialize datalink layer
+	else if ( strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr" ) == 0 ) {
+    	printf( "Protocol: %s\n", argv[1] );
+    	if (strcmp(argv[1], "gbn") == 0) { //gbn selected
+    		is_gbn = 1;
+    	}
+    	else { //selective repeat 
+    		is_gbn = 0;
+    	}
+    }
+    // Unrecognized transfer protocol
+    else {
+    	fprintf( stderr, "Error: Unrecognized transfer protocol. \n" );
+    	exit(1);
+    }
+
+	// Convert corrupt rate and drop rate parameters to int
+	corruptrate = atoi(argv[2]);
+	droprate = atoi(argv[3]);
+    
+    // Check if corrupt rate and drop rate are within bounds
+    if ( ( corruptrate < 0 || corruptrate > 100 ) || ( droprate < 0 || droprate > 100 ) ) {
+    	printf( "Corrupt and drop rates must be >= 0 and <= 100.\n" );
+    	exit(1);
+    }
 
 	client1_connected = 0;
 	client2_connected = 0;

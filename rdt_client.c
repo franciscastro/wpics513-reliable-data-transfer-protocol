@@ -11,10 +11,6 @@ Client file.
 // Main loop for the client
 int main(int argc, char *argv[]) {
 
-	// Convert corrupt rate and drop rate parameters to int
-	int corruptRate = atoi(argv[2]);
-	int dropRate = atoi(argv[3]);
-
 	// set protocol default(none)
 	is_gbn = -1;
 
@@ -38,6 +34,10 @@ int main(int argc, char *argv[]) {
     	fprintf( stderr, "Error: Unrecognized transfer protocol. \n" );
     	exit(1);
     }
+
+    // Convert corrupt rate and drop rate parameters to int
+	int corruptRate = atoi(argv[2]);
+	int dropRate = atoi(argv[3]);
     
     // Check if corrupt rate and drop rate are within bounds
     if ( ( corruptRate < 0 || corruptRate > 100 ) || ( dropRate < 0 || dropRate > 100 ) ) {

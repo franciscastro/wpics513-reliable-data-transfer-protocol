@@ -80,8 +80,8 @@ void allCaps(char *command);
 off_t filesize(const char *filename);
 void *get_in_addr(struct sockaddr *sa);
 void parseCommand(char * command);
-void createMessage(const char* command, const char* message);
-void sendFilePackets(const char* filename);
+void createMessage(Packet * pktRecvd);
+void sendFilePackets(char* filename);
 void help();
 void *receiver(void *param);
 
@@ -433,8 +433,10 @@ void *receiver1(void *param) {
 		
 		if ( pktRecvd == NULL ) { continue; }
 
-		if ( (*pktRecvd).msgType == CHAT_M) {
-			printf("Received a chat command!\n");
+		if ( (*pktRecvd).msgType == CHAT_M || (*pktRecvd).msgType == CONFIRM_M ) {
+			if ( (*pktRecvd).msgType == CHAT_M ) { "Received %s\n", CHAT }
+			else if ( (*pktRecvd).msgType == CONFIRM_M ) { "Received %s\n", CONFIRM }
+			createMessage(&pktRecvd);
 		}
 		else if ( (*pktRecvd).msgType == TRANSFER_M ) {
 			// First file packet received
@@ -474,13 +476,12 @@ void *receiver1(void *param) {
 			fclose(fp);
 			isReceiving = false;
 			printf( "%s saved.\n", fileRecvName );
+			sendFilePackets(fileRecvName);
 			memset( &fileRecvName, 0, sizeof(fileRecvName) );	// Empty the string
 		}
 		else if ( (*pktRecvd).msgType == MESSAGE_M ) {
 			printf( "[ %s ]: %s\n", (*pktRecvd).alias, (*pktRecvd).data );
-		}
-		else if ( (*pktRecvd).msgType == CONFIRM_M ) {
-			printf( "%s\n", (*pktRecvd).data );
+			createMessage(&pktRecvd);
 		}
 
 		memset( &pktRecvd, 0, sizeof(Packet) );		// Empty the struct
@@ -489,7 +490,130 @@ void *receiver1(void *param) {
 	printf( "Client: receiver() thread terminated.\n" );
 }
 
-void *receiver2(void *param) {
+// Creates message to be sent out
+void createMessage(Packet * pktRecvd) {
+
+	// Create packet
+	// Packet * msg = malloc(sizeof(msg));
+	// (*msg)->msgType = CONNECT_M;
+	// strncpy(msg->data, message, strlen(message));
+	Packet msg;
+
+	if ( (*pktRecvd).msgType == CHAT_M || (*pktRecvd).msgType == CONFIRM_M ) {
+		msg.msgType = CONFIRM_M;
+		strncpy( msg.alias, "SERVER", strlen("SERVER") );
+
+		if (is_gbn == 1) {
+			msg.sockfd = client_sockfd;
+
+			BufferEntry * pbe = malloc(sizeof(BufferEntry));
+			pbe->pkt = msg;
+
+			push_pkt_snd_buffer(0, client_sockfd, pbe);
+		}
+	}
+	/*else if ( strcmp(command, QUIT ) == 0) {
+		msg.msgType = QUIT_M;
+
+		if (is_gbn == 1) {
+			msg.sockfd = client_sockfd;
+
+			BufferEntry * pbe = malloc(sizeof(BufferEntry));
+			pbe->pkt = msg;
+
+			push_pkt_snd_buffer(0, client_sockfd, pbe);
+		}
+	}*/
+	else if ( strcmp(command, MESSAGE) == 0 ) {
+		msg.msgType = MESSAGE_M;
+		strncpy( msg.alias, "SERVER", strlen("SERVER") );
+		strncpy( msg.data, (*pktRecvd).message, strlen((*pktRecvd).message) );
+
+		if (is_gbn == 1) {
+			msg.sockfd = client_sockfd;
+
+			BufferEntry * pbe = malloc(sizeof(BufferEntry));
+			pbe->pkt = msg;
+
+			push_pkt_snd_buffer(0, client_sockfd, pbe);
+		}
+	}
+
+	memset( &msg, 0, sizeof(Packet) );	// Empty the struct
+}
+
+// Chunk a file and send file packets to datalink
+void sendFilePackets(char* filename) {
+	
+	// Create file pointer
+	FILE *fp = fopen(filename, "rb");
+	
+	// If file does not exist
+	if ( fp == NULL ) {
+		fprintf( stderr, "File open error. Check your file name.\n" );
+		return;
+	}
+
+	// If file is > 100 MB, don't send
+	int fullsize = filesize( filename );
+	if ( fullsize > 104857600 ) {
+		printf( "Sending files > 100 MB is prohibited.\n" );
+		return;
+	}
+	else {
+		printf( "File size: %i bytes\n", fullsize );
+	}	
+
+	// Read and send file packets
+	while( !feof(fp) ){
+
+		// file buffer to store chunks of files
+		char filebuff[MAXDATA];
+
+		// Create packet
+		Packet msg;
+		msg.msgType = TRANSFER_M;
+		strncpy( msg.filename, filename, strlen(filename) );
+
+		// Read data from file
+		int numread = fread( msg.data, 1, MAXDATA, fp );
+		printf( "Bytes read: %i\n", numread );
+		
+		// Send data to datalink
+		if (is_gbn == 1) {
+			msg.sockfd = client_sockfd;
+
+			BufferEntry * pbe = malloc(sizeof(BufferEntry));
+			pbe->pkt = msg;
+
+			push_pkt_snd_buffer(0, client_sockfd, pbe);
+		}
+
+		memset( &msg, 0, sizeof(Packet) );	// Empty the struct
+	}
+
+	// Close the file pointer
+	fclose(fp);
+
+	// File end packet
+	Packet msg;
+	msg.msgType = TRANSFER_END_M;
+	strncpy( msg.filename, filename, strlen(filename) );
+	
+	// Send data to datalink
+	if (is_gbn == 1) {
+		msg.sockfd = client_sockfd;
+
+		BufferEntry * pbe = malloc(sizeof(BufferEntry));
+		pbe->pkt = msg;
+
+		push_pkt_snd_buffer(0, client_sockfd, pbe);
+	}
+	
+	memset( &msg, 0, sizeof(Packet) );	// Empty the struct
+}
+
+/*void *receiver2(void *param) {
 
 	// File variables
 	FILE *fp;						// File pointer
@@ -558,7 +682,7 @@ void *receiver2(void *param) {
 	}
 
 	printf( "Client: receiver() thread terminated.\n" );
-}
+}*/
 
 /*
 	Function to start thread
