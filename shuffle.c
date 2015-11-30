@@ -15,7 +15,7 @@ static int rand_int(int n) {
   return rnd % n;
 }
 
-void shuffle(const char *sentence, int n) {
+void shuffle(char *sentence, int n) {
   int i, j, tmp;
 
   for (i = n - 1; i > 0; i--) {
@@ -30,11 +30,12 @@ void shuffle(const char *sentence, int n) {
 
 int main() {
 
-	srand((unsigned) time(&t))
+	srand((unsigned) time(&t));
 
 	char sentence[80];
 
 	fgets(sentence, 80, stdin);
+	sentence[strlen( sentence ) - 1] = '\0';
 	
 	shuffle(sentence, strlen(sentence));
 
