@@ -286,14 +286,14 @@ void gbn_rdt_sendall(GBN_instance * gbn_inst) {
 	while (fbe != NULL && fbe->frame.seqNumber < gbn_inst->base) 
 		fbe = fbe->next;
 
-	printf("gbn_inst->base %d and gbn_inst->nxt_sq_nm %d\n", gbn_inst->base, gbn_inst->nxt_sq_nm);
+	// printf("gbn_inst->base %d and gbn_inst->nxt_sq_nm %d\n", gbn_inst->base, gbn_inst->nxt_sq_nm);
 	while(fbe != NULL && fbe->frame.seqNumber < gbn_inst->nxt_sq_nm) {
-		printf("GBN sender retransmitting seqNumber %d\n", fbe->frame.seqNumber);
+		// printf("GBN sender retransmitting seqNumber %d\n", fbe->frame.seqNumber);
 		udt_send(gbn_inst->is_srvr, fbe->frame);
 
-		if (fbe->next == NULL) {
-			printf("No more frames to be retransmitted\n");
-		}
+		// if (fbe->next == NULL) {
+		// 	printf("No more frames to be retransmitted\n");
+		// }
 		fbe = fbe->next;
 	}
 }
@@ -329,7 +329,7 @@ int gbn_update_timer(GBN_instance * gbn_inst) {
 	}
 	return 0; // 1 if timeout
 }
-
+	
 void update_gbn(GBN_instance * gbn_inst) {
 	Frame * rcv_frame = NULL;	
 	if (gbn_inst->is_sndr) { //sender fsm
@@ -355,8 +355,8 @@ void update_gbn(GBN_instance * gbn_inst) {
 		rcv_frame = gbn_get_frame(gbn_inst);
 		if (rcv_frame != NULL && !corrupt_frame(*rcv_frame)) {
 			// printf("Receiving in sndr FSM\n");
-			if (gbn_inst->is_srvr == 1 && rcv_frame->seqNumber > 0)
-				printf("Got data frame\n");
+			if (gbn_inst->is_srvr == 0 && rcv_frame->seqNumber > 0)
+				printf("Got ACK frame %d\n", rcv_frame->seqNumber);
 
 			int old_base = gbn_inst->base;
 			gbn_inst->base = rcv_frame->seqNumber + 1;

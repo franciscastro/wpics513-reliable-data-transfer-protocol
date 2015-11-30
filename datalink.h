@@ -434,10 +434,10 @@ int udt_send_frame(int is_srvr, int socket_to, Frame * frame) {
 	drop = 1 + (rand() % 100);
 	corrupt = 1 + (rand() % 100);
 
-	if (frame->type != ACK_F) {
-		printf("udt_send_frame to socket: %d\n with frame message type %d\n and seqNumber %d\n", socket_to, frame->pkt.msgType, frame->seqNumber);
-		printf("checksum is %s\n", frame->checksum);
-	}
+	// if (frame->type != ACK_F) {
+	// 	printf("udt_send_frame to socket: %d\n with frame message type %d\n and seqNumber %d\n", socket_to, frame->pkt.msgType, frame->seqNumber);
+	// 	printf("checksum is %s\n", frame->checksum);
+	// }
 
 	if (socket_to < 0)
 		return 1;
@@ -448,17 +448,17 @@ int udt_send_frame(int is_srvr, int socket_to, Frame * frame) {
     int n;
 
     // To make sure all data is sent
-	if (frame->type != ACK_F) 
-	    printf("sending %d bytes from size %d, is null? %d\n", framelen, sizeof(frame), frame == NULL);
+	// if (frame->type != ACK_F) 
+	//     printf("sending %d bytes from size %d, is null? %d\n", framelen, sizeof(frame), frame == NULL);
 	
-	if (is_srvr == 0)
-		printf("drop is %d\n", drop);
-	if (is_srvr == 1 || drop < 0) {
+	// if (is_srvr == 0)
+	// 	printf("drop is %d\n", drop);
+	if (is_srvr == 1 || drop < 20) {
 	    while(total < framelen) {
 
 	        n = send(socket_to, (frame + total), bytesleft, 0);
 			if (frame->type != ACK_F) 
-		        printf("sent n = %d\n", n);
+		        // 	printf("sent n = %d\n", n);
 	        
 	        if (n == -1) { break; }
 	        
