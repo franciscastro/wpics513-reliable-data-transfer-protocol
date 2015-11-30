@@ -25,7 +25,7 @@ void shuffle(char *sentence, int n) {
     sentence[i] = tmp;
   }
 
-  printf("%s\n", );
+  printf("%s\n", sentence);
 }
 
 int main() {
