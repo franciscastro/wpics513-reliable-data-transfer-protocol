@@ -54,24 +54,24 @@ a. Set the hostname of the RDT: Echo Server in the config.h file. You may edit t
 
 b. Once you have all the necessary files listed in [1], open a terminal, navigate to the directory containing the project files and run the following command:
 
-make all
+make
 
 c. Running the make command will produce two (2) executable files:
-- rdtserver
-- rdtclient
+- rdt_server
+- rdt_client
 
 
 ======================================================================================
 
-[3] RUNNING RELIABLE DATA TRANSFER PROTOCOL: ECHO SERVER
+[3] RUNNING RDT: ECHO SERVER
 
-a. To run the RDT: Echo Server server, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make all', and run the following command:
+a. To run the RDT: Echo Server server, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
 
-./rdtserver [gbn|sr] [corrupt rate] [drop rate]
+./rdt_server [gbn|sr] [corrupt rate] [drop rate]
 
 b. To run the RDT: Echo Server client, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
 
-./rdtclient [gbn|sr] [corrupt rate] [drop rate]
+./rdt_client [gbn|sr] [corrupt rate] [drop rate]
 
 c. It is important to note that the transfer protocol selected in the server must be the same as the client when running the program.
 
