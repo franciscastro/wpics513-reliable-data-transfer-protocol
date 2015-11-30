@@ -1,29 +1,42 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
- 
-int rrand(int m) {
-  return (int)((double)m * ( rand() / (RAND_MAX+1.0) ));
-}
- 
-#define BYTE(X) ((unsigned char *)(X))
+#include <time.h>
 
-void shuffle(const char *obj, size_t nmemb, size_t size) {
-  void *temp = malloc(size);
-  size_t n = nmemb;
-  while ( n > 1 ) {
-    size_t k = rrand(n--);
-    memcpy(temp, BYTE(obj) + n*size, size);
-    memcpy(BYTE(obj) + n*size, BYTE(obj) + k*size, size);
-    memcpy(BYTE(obj) + k*size, temp, size);
+time_t t;
+ 
+static int rand_int(int n) {
+  int limit = RAND_MAX - RAND_MAX % n;
+  int rnd;
+
+  do {
+    rnd = rand();
+  } while (rnd >= limit);
+  return rnd % n;
+}
+
+void shuffle(const char *sentence, int n) {
+  int i, j, tmp;
+
+  for (i = n - 1; i > 0; i--) {
+    j = rand_int(i + 1);
+    tmp = sentence[j];
+    sentence[j] = sentence[i];
+    sentence[i] = tmp;
   }
-  printf("%s\n", temp);
-  free(temp);
+
+  printf("%s\n", );
 }
 
-int main(int argc, char const *argv[]) {
+int main() {
+
+	srand((unsigned) time(&t))
+
+	char sentence[80];
+
+	fgets(sentence, 80, stdin);
 	
-	shuffle(argv[1], strlen(argv[1]), sizeof(argv[1]));
+	shuffle(sentence, strlen(sentence));
 
 	return 0;
 }
