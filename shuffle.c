@@ -8,7 +8,7 @@ int rrand(int m) {
  
 #define BYTE(X) ((unsigned char *)(X))
 
-void shuffle(void *obj, size_t nmemb, size_t size) {
+void shuffle(const char *obj, size_t nmemb, size_t size) {
   void *temp = malloc(size);
   size_t n = nmemb;
   while ( n > 1 ) {
