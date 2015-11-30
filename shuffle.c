@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
  
 int rrand(int m) {
   return (int)((double)m * ( rand() / (RAND_MAX+1.0) ));
