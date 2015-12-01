@@ -1,9 +1,9 @@
 ======================================================================================
 
 Authors: Francisco Castro and Antonio Umali
-Project: CS 513 Project 1 - Text ChatRoulette
-Description: README file for the Text ChatRoulette project
-Last modified: 12 October 2015
+Project: CS 513 Project 2 - Reliable Data Transfer Protocol (RDT): Echo Server
+Description: README file for the RDT: Echo Server project
+Last modified: 29 November 2015
 
 ======================================================================================
 
@@ -13,60 +13,66 @@ Notes:
 
 ======================================================================================
 
-This is the README file for the Text ChatRoulette project. Read this prior to compiling and running the project. This file contains information on the following:
+This is the README file for the RDT: Echo Server project. Read this prior to compiling and running the project. This file contains information on the following:
 
 [1] Project files
-[2] Compiling Text ChatRoulette
-[3] Running Text ChatRoulette
+[2] Compiling RDT: Echo Server
+[3] Running RDT: Echo Server
 
 ======================================================================================
 
 [1] PROJECT FILES
 
-Before compiling and running Text ChatRoulette, make sure the following files are present in a single directory:
-
+Before compiling and running RDT: Echo Server, make sure the following files are present in a single directory:
+gbn datalink srpt
 1. Server files
-(a) tcr_server.c
-(b) tcr_server.h
+(a) rdt_server.c
+(b) rdt_server.h
 
 2. Client files
-(a) tcr_client.c
-(b) tcr_client.h
+(a) rdt_client.c
+(b) rdt_client.h
+
+3. Additional header files
+(a) datalink.h
+(b) gbn.h
+(c) srpt.h
 
 3. Other project files
 (a) makefile
-(b) HOSTNAME
-(c) README.txt (this file)
+(b) README.txt (this file)
+(c) stat-graphs.xlsx
+(d) stat-graphs.pdf
 
 If the project is compressed as an archive file, extract the contents of the archive into a single directory.
 
 ======================================================================================
 
-[2] COMPILING TEXT CHATROULETTE
+[2] COMPILING RDT: ECHO SERVER
 
-a. Set the hostname of the Text ChatRoulette server in the HOSTNAME file. You may edit the hostname indicated in the file with a text editor. Save and close the HOSTNAME file.
+a. Set the hostname of the RDT: Echo Server in the config.h file. You may edit the hostname indicated in the file with a text editor. Save and close the config.h file.
 
 b. Once you have all the necessary files listed in [1], open a terminal, navigate to the directory containing the project files and run the following command:
 
 make
 
 c. Running the make command will produce two (2) executable files:
-- tcrserver
-- tcrclient
+- rdt_server
+- rdt_client
 
 
 ======================================================================================
 
-[3] RUNNING TEXT CHATROULETTE
+[3] RUNNING RDT: ECHO SERVER
 
-a. To run the Text ChatRoulette server, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
+a. To run the RDT: Echo Server server, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
 
-./tcrserver
+./rdt_server [gbn|sr] [corrupt rate] [drop rate]
 
-b. To run the Text ChatRoulette client, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
+b. To run the RDT: Echo Server client, open a terminal, navigate to the directory containing the project files and the executable files produced by 'make', and run the following command:
 
-./tcrclient
+./rdt_client [gbn|sr] [corrupt rate] [drop rate]
 
-c. You may run multiple instances of the client to connect to the server. Just copy the directory containing all the project files and executable files into another directory and run the client from there.
+c. It is important to note that the transfer protocol selected in the server must be the same as the client when running the program.
 
 ======================================================================================

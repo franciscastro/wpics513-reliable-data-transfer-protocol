@@ -6,7 +6,7 @@ Last modified: 12 Oct 2015
 This is the TCR server process file.
 */
 
-#include "tcr_server.h"
+#include "rdt_server.h"
 int enable_stats;
 int abs_start;
 
@@ -14,17 +14,18 @@ int abs_start;
 void throwout(int socketfd) {
 	if (client_map[socketfd] != socketfd && socketfd > -1) {
 		// construct response packet
-		struct packet throw_packet, throw_notif_packet;
-		strcpy(throw_packet.command, "NOTIF");
-		strcpy(throw_notif_packet.command, "NOTIF");
+		Packet throw_packet, throw_notif_packet;
+		throw_packet.msgType = CONFIRM_M;
+		throw_notif_packet.msgType = CONFIRM_M;
 
-		strcpy(throw_packet.message, "Server has thrown you out of your chat channel with ");
-		strcat(throw_packet.message, client_alias[client_map[socketfd]]);
+		strcpy(throw_packet.data, "Server has thrown you out of your chat channel with ");
+		strcat(throw_packet.data, client_alias[client_map[socketfd]]);
 
-		strcpy(throw_notif_packet.message, "Server has thrown your partner ");
-		strcat(throw_notif_packet.message, client_alias[socketfd]);
-		strcat(throw_notif_packet.message, " out of your chat channel");
+		strcpy(throw_notif_packet.data, "Server has thrown your partner ");
+		strcat(throw_notif_packet.data, client_alias[socketfd]);
+		strcat(throw_notif_packet.data, " out of your chat channel");
 
+		// replace with datalink sending
 		if (send_data(socketfd, &throw_packet) == -1)
 			perror("send");
 		if (send_data(client_map[socketfd], &throw_notif_packet) == -1)
@@ -33,10 +34,10 @@ void throwout(int socketfd) {
 	}
 	else if(client_map[socketfd] == socketfd){
 
-		struct packet throw_packet;
-		strcpy(throw_packet.command, "NOTIF");
+		Packet throw_packet;
+		throw_packet.msgType = CONFIRM_M;
 
-		strcpy(throw_packet.message, "Server has thrown you out of your chat channel");
+		strcpy(throw_packet.data, "Server has thrown you out of your chat channel");
 		if (send_data(socketfd, &throw_packet) == -1)
 			perror("send");
 		disconnect_chat(socketfd, 1);
@@ -49,103 +50,18 @@ void end() {
 	for (c = 0; c < MAX_CLIENTS; c++) {
 		if (client_map[c] > -2) {
 			throwout(c);
-			struct packet end_packet;
-			strcpy(end_packet.command, "NOTIF");
-			strcpy(end_packet.message, "Server has thrown you out of the chat queue");
+			Packet end_packet;
+			end_packet.msgType = CONFIRM_M;
+			strcpy(end_packet.data, "Server has thrown you out of the chat queue");
 			if (send_data(c, &end_packet) == -1)
 				perror("send");
 		}
 		client_map[c] = -2;
-		client_flags[c] = 0;
-		client_blocks[c] = 0;
 		client_bytes[c] = 0;
 		memset(&client_alias[c], 0, MAXCOMMANDSIZE*sizeof(client_alias[0]));
 	}
 	ready = 0;
 	enable_stats = 0;
-}
-
-// prints server stats
-void stats() {
-	int c;
-	int num_chat_queue 	= 0;
-	int num_chatting 	= 0;
-	int num_flagged 	= 0;
-	FILE *fp;
-
-	fp = fopen("server_stats.dat", "ab");
-	for (c = 0; c < MAX_CLIENTS; c++){
-		if (client_map[c] == -1 || client_map[c] == c)
-			num_chat_queue++;
-		else if(client_map[c] != c && client_map[c] != -2){
-			printf("client_map[c] %d\n",client_map[c]);
-			num_chatting++;
-		}
-		if (client_flags[c] > 0)
-			num_flagged++;
-	}
-	printf("SERVER STATS\n");
-	printf("==========================================\n");
-	fprintf(fp, "SERVER STATS\n");
-	fprintf(fp, "==========================================\n");
-
-	printf("The number of clients on the chat queue is %d\n", num_chat_queue);
-	fprintf(fp, "The number of clients on the chat queue is %d\n", num_chat_queue);
-	for (c = 0; c < MAX_CLIENTS; c++) {
-		if (client_map[c] == -1){
-			printf("Client %s on socket %d is on the chat queue and not ready to chat\n",
-					client_alias[c], c);
-			fprintf(fp, "Client %s on socket %d is on the chat queue and not ready to chat\n",
-					client_alias[c], c);
-		}
-		else if (client_map[c] == c) {
-			printf("Client %s on socket %d is on the chat queue and is ready to chat\n",
-					client_alias[c], c);
-			fprintf(fp, "Client %s on socket %d is on the chat queue and is ready to chat\n",
-					client_alias[c], c);
-		}
-	}
-
-	printf("The number of clients chatting is %d on %d channels\n", num_chatting, num_chatting/2);
-	fprintf(fp, "The number of clients chatting is %d on %d channels\n", num_chatting, num_chatting/2);
-	for (c = 0; c < MAX_CLIENTS; c++) {
-		if (client_map[c] != -1 && client_map[c] != c && client_map[c] != -2) {
-			printf("Client %s on socket %d is chatting with client %s on socket %d\n",
-					client_alias[c], c, client_alias[client_map[c]], client_map[c]);
-			printf("And has used %d bytes\n", client_bytes[c]);
-			fprintf(fp, "Client %s on socket %d is chatting with client %s on socket %d\n",
-					client_alias[c], c, client_alias[client_map[c]], client_map[c]);
-			fprintf(fp, "And has used %d bytes\n", client_bytes[c]);
-		}
-	}
-
-	printf("The number of clients flagged is %d\n", num_flagged);
-	for (c = 0; c < MAX_CLIENTS; c++) {
-		if (client_flags[c] > 0){
-			printf("Client %s on socket %d has been flagged %d times\n", client_alias[c], c, client_flags[c]);
-			fprintf(fp, "Client %s on socket %d has been flagged %d times\n", client_alias[c], c, client_flags[c]);
-			if (client_map[c] == -1) {
-				printf("And is currently on the chat queue\n");
-				fprintf(fp, "And is currently on the chat queue\n");
-			}
-			else if(client_map[c] == c) {
-				printf("And is currently waiting for a chat partner\n");
-				fprintf(fp, "And is currently waiting for a chat partner\n");
-			}
-		}
-	}
-	fclose(fp);
-}
-
-// throwsout and prevents a user on the socket from chatting
-void block(int socketfd) {
-	throwout(socketfd);
-	client_blocks[socketfd] = 1;
-}
-
-// restores user's chat priveleges
-void unblock(int socketfd) {
-	client_blocks[socketfd] = 0;
 }
 
 // Convert strings to all uppercase
@@ -171,8 +87,6 @@ void *io_handler(void *param, int socket_fd) {
 		if (len > 0 && command[len-1] == '\n') {
 			command[len-1] = '\0';
 		}
-		allCaps(command);
-
 		// parse the command, check if either single or double arg command
 		int token_count = 0;
 		int idx = 1;
@@ -201,6 +115,7 @@ void *io_handler(void *param, int socket_fd) {
 
 		if (idx == 1) {
 			char* c1 = &s[0];
+			allCaps(c1);
 			if(!strcmp(c1, "EXIT")) {
 				/* clean up */
 				printf("Terminating server...\n");
@@ -215,12 +130,6 @@ void *io_handler(void *param, int socket_fd) {
 				else
 					printf("Server ready: waiting for connections...\n");
 			}
-			else if(!strcmp(c1, "STATS")){
-				if (enable_stats == 0)
-					printf ("Server still inactive\n");
-				else
-					stats();
-			}
 			else if (!strcmp(c1, "END")){
 				printf ("Server terminating...\n");
 				end();
@@ -233,20 +142,15 @@ void *io_handler(void *param, int socket_fd) {
 		else if (idx == 2) {
 			char* c1 = &s[0];
 			char* c2 = &s[1];
-			if(!strcmp(c1, "BLOCK")){
-				int socket = atoi(c2);
-				printf("Blocking socket %d\n", socket);
-				block(socket);
-			}
-			else if(!strcmp(c1, "UNBLOCK")){
-				int socket = atoi(c2);
-				printf("Unblocking socket %d\n", socket);
-				unblock(socket);
-			}
-			else if(!strcmp(c1, "THROWOUT")) {
+			allCaps(c1);
+			if(!strcmp(c1, "THROWOUT")) {
 				int socket = atoi(c2);
 				printf("Throwing out socket %d\n", socket);
 				throwout(socket);
+			}
+			else if (!strcmp(c1, "TRANSFER")) {
+				printf("Server sending file %s \n", c2);
+				sendFilePackets(c2);
 			}
 			else {
 				fprintf(stderr, "Unknown command: %s...\n", command);
@@ -260,9 +164,43 @@ void *io_handler(void *param, int socket_fd) {
 	return NULL;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 
-	char empty_name[ALIAS_LEN];
+	// Check user arguments supplied
+	if ( argc != 4 ) {
+		fprintf(stderr, "Usage: %s [gbn|sr] [corrupt rate] [drop rate]\n-- Where: gbn = Go-back-N, sr = Selective-repeat\n", argv[0]);
+		exit(1);
+	}
+	// Check selected protocol and initialize datalink layer
+	else if ( strcmp(argv[1], "gbn") == 0 || strcmp(argv[1], "sr" ) == 0 ) {
+    	printf( "Protocol: %s\n", argv[1] );
+    	if (strcmp(argv[1], "gbn") == 0) { //gbn selected
+    		is_gbn = 1;
+    	}
+    	else { //selective repeat 
+    		is_gbn = 0;
+    	}
+    }
+    // Unrecognized transfer protocol
+    else {
+    	fprintf( stderr, "Error: Unrecognized transfer protocol. \n" );
+    	exit(1);
+    }
+
+	// Convert corrupt rate and drop rate parameters to int
+	corruptRate = atoi(argv[2]);
+	dropRate = atoi(argv[3]);
+    
+    // Check if corrupt rate and drop rate are within bounds
+    if ( ( corruptRate < 0 || corruptRate > 100 ) || ( dropRate < 0 || dropRate > 100 ) ) {
+    	printf( "Corrupt and drop rates must be >= 0 and <= 100.\n" );
+    	exit(1);
+    }
+
+	client1_connected = 0;
+	client2_connected = 0;
+
+	char empty_name[ALIASSIZE];
 	reset_client_maps();
 	reset_aliases();
 	enable_stats = 0;
@@ -285,7 +223,6 @@ int main() {
 
 	FD_ZERO(&master);
     FD_ZERO(&read_fds);
-	
 
 	memset(&hints, 0, sizeof hints);	// make sure the struct is empty
 	hints.ai_family = AF_UNSPEC;		// don't care if IPv4 (AF_INET) or IPv6 (AF_INET6)
